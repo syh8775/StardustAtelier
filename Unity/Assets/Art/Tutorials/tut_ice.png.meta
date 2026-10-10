@@ -1,0 +1,936 @@
+fileFormatVersion: 2
+guid: 9c1aa9c146e10df4fbb7b15d3448f930
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 7822149312047055377
+    second: tut_ice_0
+  - first:
+      213: 8214724538842307170
+    second: tut_ice_1
+  - first:
+      213: 1081371313632627917
+    second: tut_ice_2
+  - first:
+      213: -444963178771622984
+    second: tut_ice_3
+  - first:
+      213: -1909329474332561702
+    second: tut_ice_4
+  - first:
+      213: -5621521311260567261
+    second: tut_ice_5
+  - first:
+      213: 6250230403120927490
+    second: tut_ice_6
+  - first:
+      213: 8226502041902146491
+    second: tut_ice_7
+  - first:
+      213: 2376988318529564589
+    second: tut_ice_8
+  - first:
+      213: 6006268698931529667
+    second: tut_ice_9
+  - first:
+      213: -8102819645698619961
+    second: tut_ice_10
+  - first:
+      213: -7205523790188348019
+    second: tut_ice_11
+  - first:
+      213: -1882270455465873893
+    second: tut_ice_12
+  - first:
+      213: 7345553415698114050
+    second: tut_ice_13
+  - first:
+      213: -1814819676281272657
+    second: tut_ice_14
+  - first:
+      213: 2107185498348214838
+    second: tut_ice_15
+  - first:
+      213: 6365374501647650033
+    second: tut_ice_16
+  - first:
+      213: -6311558728969999397
+    second: tut_ice_17
+  - first:
+      213: 4097628347898041718
+    second: tut_ice_18
+  - first:
+      213: 8699424725581704348
+    second: tut_ice_19
+  - first:
+      213: -7517593265908191622
+    second: tut_ice_20
+  - first:
+      213: -6107784972966702735
+    second: tut_ice_21
+  - first:
+      213: -5992885212325483921
+    second: tut_ice_22
+  - first:
+      213: -1765377591881925499
+    second: tut_ice_23
+  - first:
+      213: 71596536706033839
+    second: tut_ice_24
+  - first:
+      213: -1059644257645711848
+    second: tut_ice_25
+  - first:
+      213: 7975552224999162491
+    second: tut_ice_26
+  - first:
+      213: -1979022467430278800
+    second: tut_ice_27
+  - first:
+      213: 6890762633346176145
+    second: tut_ice_28
+  - first:
+      213: 2543493576576399573
+    second: tut_ice_29
+  - first:
+      213: 6966489603992655382
+    second: tut_ice_30
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: tut_ice_0
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 371
+        width: 18
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11281a41b5bdd8c60800000000000000
+      internalID: 7822149312047055377
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_1
+      rect:
+        serializedVersion: 2
+        x: 118
+        y: 370
+        width: 55
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26a5161d170900270800000000000000
+      internalID: 8214724538842307170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_2
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 368
+        width: 31
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dccce5bfa7dc10f00800000000000000
+      internalID: 1081371313632627917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_3
+      rect:
+        serializedVersion: 2
+        x: 245
+        y: 4
+        width: 338
+        height: 388
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b3503fa85c23d9f0800000000000000
+      internalID: -444963178771622984
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_4
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 25
+        width: 228
+        height: 343
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ade693b85f2b085e0800000000000000
+      internalID: -1909329474332561702
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_5
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 350
+        width: 18
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3299609c6285cf1b0800000000000000
+      internalID: -5621521311260567261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_6
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 346
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2039e5ebf674db650800000000000000
+      internalID: 6250230403120927490
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_7
+      rect:
+        serializedVersion: 2
+        x: 232
+        y: 356
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb36a9f65086a2270800000000000000
+      internalID: 8226502041902146491
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_8
+      rect:
+        serializedVersion: 2
+        x: 236
+        y: 350
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: daf25392842ccf020800000000000000
+      internalID: 2376988318529564589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_9
+      rect:
+        serializedVersion: 2
+        x: 180
+        y: 345
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c78c512f8d8a5350800000000000000
+      internalID: 6006268698931529667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_10
+      rect:
+        serializedVersion: 2
+        x: 209
+        y: 345
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c5c31b76700d8f80800000000000000
+      internalID: -8102819645698619961
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_11
+      rect:
+        serializedVersion: 2
+        x: 220
+        y: 318
+        width: 13
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8d72311a46d00c90800000000000000
+      internalID: -7205523790188348019
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_12
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 86
+        width: 57
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1e6eb25ef4d0e5e0800000000000000
+      internalID: -1882270455465873893
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_13
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 87
+        width: 10
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 206e755c9e5a0f560800000000000000
+      internalID: 7345553415698114050
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_14
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 87
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa68dd7ae1770d6e0800000000000000
+      internalID: -1814819676281272657
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_15
+      rect:
+        serializedVersion: 2
+        x: 159
+        y: 86
+        width: 11
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 63a56e0eb0a3e3d10800000000000000
+      internalID: 2107185498348214838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_16
+      rect:
+        serializedVersion: 2
+        x: 181
+        y: 87
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fc8901526a565850800000000000000
+      internalID: 6365374501647650033
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_17
+      rect:
+        serializedVersion: 2
+        x: 187
+        y: 86
+        width: 20
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bdb2abca6c6d868a0800000000000000
+      internalID: -6311558728969999397
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_18
+      rect:
+        serializedVersion: 2
+        x: 30
+        y: 43
+        width: 7
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6759802b543bdd830800000000000000
+      internalID: 4097628347898041718
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_19
+      rect:
+        serializedVersion: 2
+        x: 83
+        y: 43
+        width: 12
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9c2c8642b09ab870800000000000000
+      internalID: 8699424725581704348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_20
+      rect:
+        serializedVersion: 2
+        x: 93
+        y: 57
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7e6cab21c42ca790800000000000000
+      internalID: -7517593265908191622
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_21
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 36
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 171d9d17de9cc3ba0800000000000000
+      internalID: -6107784972966702735
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_22
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 36
+        width: 11
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6ae5aba6aef4dca0800000000000000
+      internalID: -5992885212325483921
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_23
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 39
+        width: 12
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58c717dfe6e1087e0800000000000000
+      internalID: -1765377591881925499
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_24
+      rect:
+        serializedVersion: 2
+        x: 117
+        y: 42
+        width: 10
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa8e289bbac5ef000800000000000000
+      internalID: 71596536706033839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_25
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 28
+        width: 15
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81eaeb279236b41f0800000000000000
+      internalID: -1059644257645711848
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_26
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 31
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b72c6aa0e7adeae60800000000000000
+      internalID: 7975552224999162491
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_27
+      rect:
+        serializedVersion: 2
+        x: 134
+        y: 31
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0791d4a1d891984e0800000000000000
+      internalID: -1979022467430278800
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_28
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 30
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19452203b18e0af50800000000000000
+      internalID: 6890762633346176145
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_29
+      rect:
+        serializedVersion: 2
+        x: 212
+        y: 18
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d8f2509eed4c4320800000000000000
+      internalID: 2543493576576399573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_ice_30
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 15
+        width: 10
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6161f618261fda060800000000000000
+      internalID: 6966489603992655382
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      tut_ice_0: 7822149312047055377
+      tut_ice_1: 8214724538842307170
+      tut_ice_10: -8102819645698619961
+      tut_ice_11: -7205523790188348019
+      tut_ice_12: -1882270455465873893
+      tut_ice_13: 7345553415698114050
+      tut_ice_14: -1814819676281272657
+      tut_ice_15: 2107185498348214838
+      tut_ice_16: 6365374501647650033
+      tut_ice_17: -6311558728969999397
+      tut_ice_18: 4097628347898041718
+      tut_ice_19: 8699424725581704348
+      tut_ice_2: 1081371313632627917
+      tut_ice_20: -7517593265908191622
+      tut_ice_21: -6107784972966702735
+      tut_ice_22: -5992885212325483921
+      tut_ice_23: -1765377591881925499
+      tut_ice_24: 71596536706033839
+      tut_ice_25: -1059644257645711848
+      tut_ice_26: 7975552224999162491
+      tut_ice_27: -1979022467430278800
+      tut_ice_28: 6890762633346176145
+      tut_ice_29: 2543493576576399573
+      tut_ice_3: -444963178771622984
+      tut_ice_30: 6966489603992655382
+      tut_ice_4: -1909329474332561702
+      tut_ice_5: -5621521311260567261
+      tut_ice_6: 6250230403120927490
+      tut_ice_7: 8226502041902146491
+      tut_ice_8: 2376988318529564589
+      tut_ice_9: 6006268698931529667
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

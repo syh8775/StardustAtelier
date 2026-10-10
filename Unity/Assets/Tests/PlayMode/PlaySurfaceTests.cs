@@ -1,0 +1,276 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
+using StardustAtelier.Core;
+using StardustAtelier.View;
+
+namespace StardustAtelier.PlayTests
+{
+    public sealed class PlaySurfaceTests
+    {
+        private StardustApp app;
+        // [실제 코드에 남길 주석] 실제 씬의 레이캐스트와 포인터 이벤트를 거쳐 입력부터 표시까지 검사합니다.
+        [UnitySetUp] public IEnumerator SetUp()
+        {
+            SceneManager.LoadScene("Stardust");
+            yield return null;
+            app = UnityEngine.Object.FindFirstObjectByType<StardustApp>();
+            app.StartLevel(0,63); app.SkipIntro();
+            yield return Ready();
+        }
+        private IEnumerator Ready()
+        {
+            float deadline = Time.realtimeSinceStartup+12;
+            while (app.Busy && Time.realtimeSinceStartup < deadline)
+            {
+                // 아이템 첫 생성 설명 팝업은 [확인]으로 닫고 계속합니다.
+                if (app.ItemTutorialOpen) app.primary.onClick.Invoke();
+                yield return null;
+            }
+            Assert.That(app.Busy,Is.False,"Animation did not finish.");
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+        }
+        private PointerEventData Data(GameObject target)
+        {
+            Canvas.ForceUpdateCanvases();
+            PointerEventData data = new PointerEventData(EventSystem.current);
+            data.position = RectTransformUtility.WorldToScreenPoint(null,target.transform.position);
+            List<RaycastResult> hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(data,hits);
+            Assert.That(hits.Count,Is.GreaterThan(0),target.name+" has no raycast hit.");
+            Assert.That(hits[0].gameObject,Is.EqualTo(target),target.name+" is covered.");
+            data.pointerCurrentRaycast = hits[0]; data.pointerPressRaycast = hits[0];
+            return data;
+        }
+        private void Tap(CellPosition p)
+        {
+            GameObject target = app.board.At(p).gameObject; PointerEventData data = Data(target);
+            ExecuteEvents.Execute(target,data,ExecuteEvents.pointerDownHandler);
+            ExecuteEvents.Execute(target,data,ExecuteEvents.pointerUpHandler);
+        }
+        private void Click(UnityEngine.UI.Button button)
+        {
+            PointerEventData data = Data(button.gameObject);
+            ExecuteEvents.Execute(button.gameObject,data,ExecuteEvents.pointerDownHandler);
+            ExecuteEvents.Execute(button.gameObject,data,ExecuteEvents.pointerUpHandler);
+            ExecuteEvents.Execute(button.gameObject,data,ExecuteEvents.pointerClickHandler);
+        }
+        private void AssertSynchronized()
+        {
+            foreach (CellPosition p in app.Session.Board.Positions())
+            {
+                Cell core = app.Session.Board[p], shown = app.board.ViewBoard[p];
+                Assert.That(shown.occupant.kind,Is.EqualTo(core.occupant.kind),p.ToString());
+                Assert.That(shown.occupant.color,Is.EqualTo(core.occupant.color),p.ToString());
+                Assert.That(shown.ice,Is.EqualTo(core.ice),p.ToString());
+                Assert.That(shown.chained,Is.EqualTo(core.chained),p.ToString());
+            }
+            Assert.That(app.hud.moves.text,Is.EqualTo(app.Session.MovesLeft.ToString()));
+        }
+
+        private void PlaceSpecial(CellPosition p, OccupantKind kind, bool chained = false)
+        {
+            app.Session.Board[p].occupant = new Occupant { kind=kind,color=kind==OccupantKind.Prism ? BlockColor.None : BlockColor.B,orientation=Orientation.H };
+            app.Session.Board[p].chained=chained;
+            app.board.Configure(app.Session.Board,app.Config.layout.boardAreaPx);
+        }
+        private void DragSwap(CellPosition a, CellPosition b)
+        {
+            GameObject target = app.board.At(a).gameObject; PointerEventData data = Data(target);
+            ExecuteEvents.Execute(target,data,ExecuteEvents.pointerDownHandler);
+            data.position = RectTransformUtility.WorldToScreenPoint(null,app.board.At(b).transform.position);
+            ExecuteEvents.Execute(target,data,ExecuteEvents.dragHandler);
+            ExecuteEvents.Execute(target,data,ExecuteEvents.pointerUpHandler);
+        }
+        [UnityTest] public IEnumerator OneClickActivatesEverySpecialAndSynchronizesReplay()
+        {
+            foreach (OccupantKind kind in new[] { OccupantKind.Rocket,OccupantKind.Bomb,OccupantKind.Meteor,OccupantKind.Prism })
+            {
+                app.StartLevel(0,63); app.SkipIntro(); yield return Ready();
+                CellPosition p = new CellPosition(0,0); PlaceSpecial(p,kind);
+                Tap(p);
+                Assert.That(app.Session.MovesLeft,Is.EqualTo(19)); Assert.That(app.Session.Turns,Is.EqualTo(1));
+                Assert.That(app.LastEvents.Exists(e=>e.kind==GameEventKind.SpecialActivated && e.occupant.kind==kind),Is.True);
+                Assert.That(app.LastEvents.Exists(e=>e.kind==GameEventKind.Swapped),Is.False);
+                yield return Ready(); AssertSynchronized();
+            }
+        }
+        [UnityTest] public IEnumerator SelectedNormalDoesNotDelaySpecialClick()
+        {
+            CellPosition p = new CellPosition(0,1); PlaceSpecial(p,OccupantKind.Bomb);
+            Tap(new CellPosition(0,0)); Tap(p); yield return Ready();
+            Assert.That(app.Session.Turns,Is.EqualTo(1));
+            Assert.That(app.LastEvents.Exists(e=>e.kind==GameEventKind.Swapped),Is.False); AssertSynchronized();
+        }
+        [UnityTest] public IEnumerator ChainedSpecialClickCannotConsumeMove()
+        {
+            CellPosition p = new CellPosition(0,0); PlaceSpecial(p,OccupantKind.Rocket,true);
+            Tap(p); yield return null;
+            Assert.That(app.Session.MovesLeft,Is.EqualTo(20)); Assert.That(app.Session.Turns,Is.Zero);
+            Assert.That(app.Session.Board[p].chained,Is.True); AssertSynchronized();
+        }
+        [UnityTest] public IEnumerator ExtraSpecialClickWhileBusyDoesNotSpendSecondMove()
+        {
+            CellPosition first = new CellPosition(0,0), second = new CellPosition(6,6);
+            PlaceSpecial(first,OccupantKind.Rocket); PlaceSpecial(second,OccupantKind.Bomb);
+            Tap(first); Assert.That(app.Busy,Is.True);
+            Tap(second); yield return Ready();
+            Assert.That(app.Session.Turns,Is.EqualTo(1)); Assert.That(app.Session.MovesLeft,Is.EqualTo(19)); AssertSynchronized();
+        }
+        [UnityTest] public IEnumerator DragStillCombinesTwoSpecialsWithoutExtraClickActivation()
+        {
+            CellPosition first = new CellPosition(0,0), second = new CellPosition(0,1);
+            PlaceSpecial(first,OccupantKind.Rocket); PlaceSpecial(second,OccupantKind.Bomb);
+            DragSwap(first,second); yield return Ready();
+            Assert.That(app.Session.Turns,Is.EqualTo(1)); Assert.That(app.Session.MovesLeft,Is.EqualTo(19));
+            Assert.That(app.LastEvents.Exists(e=>e.kind==GameEventKind.SpecialActivated && e.value==2),Is.True); AssertSynchronized();
+        }
+        [UnityTest] public IEnumerator FirstBoardIsVisibleAndInteractive()
+        {
+            Assert.That(app.board.cells.Length,Is.EqualTo(81));
+            int visible = 0;
+            foreach (CellView cell in app.board.cells) if (cell.gameObject.activeInHierarchy) visible++;
+            Assert.That(visible,Is.EqualTo(49));
+            Assert.That(app.hud.goalTexts[0].text,Is.EqualTo("12"));
+            Assert.That(app.CanInput,Is.True); AssertSynchronized();
+            yield return null;
+        }
+        [UnityTest] public IEnumerator ClickSwapUpdatesBoardMovesAndGoalAfterReplay()
+        {
+            Tap(new CellPosition(4,3)); Tap(new CellPosition(3,3)); yield return Ready();
+            Assert.That(app.Session.MovesLeft,Is.EqualTo(19));
+            Assert.That(app.Session.Goals.Remaining(0),Is.LessThan(12));
+            Assert.That(app.hud.goalTexts[0].text,Is.EqualTo(app.Session.Goals.Remaining(0).ToString()));
+            AssertSynchronized();
+        }
+        [UnityTest] public IEnumerator InvalidClickSwapReturnsWithoutSpendingMove()
+        {
+            Tap(new CellPosition(0,0)); Tap(new CellPosition(0,1)); yield return Ready();
+            Assert.That(app.Session.MovesLeft,Is.EqualTo(20)); Assert.That(app.Session.Goals.Remaining(0),Is.EqualTo(12));
+            AssertSynchronized();
+        }
+        [UnityTest] public IEnumerator DragAcceptsAtThresholdBeforePointerUp()
+        {
+            CellView first = app.board.At(new CellPosition(4,3)), second = app.board.At(new CellPosition(3,3));
+            PointerEventData data = Data(first.gameObject);
+            ExecuteEvents.Execute(first.gameObject,data,ExecuteEvents.pointerDownHandler);
+            data.position = RectTransformUtility.WorldToScreenPoint(null,second.transform.position);
+            ExecuteEvents.Execute(first.gameObject,data,ExecuteEvents.dragHandler);
+            Assert.That(app.Session.MovesLeft,Is.EqualTo(19),"Drag should execute before release.");
+            ExecuteEvents.Execute(first.gameObject,data,ExecuteEvents.pointerUpHandler);
+            yield return Ready(); Assert.That(app.Session.Turns,Is.EqualTo(1)); AssertSynchronized();
+        }
+        [UnityTest] public IEnumerator DragStartedDuringResolutionNeverReappears()
+        {
+            Tap(new CellPosition(4,3)); Tap(new CellPosition(3,3));
+            Assert.That(app.Busy,Is.True);
+            CellView first = app.board.At(new CellPosition(0,0)), second = app.board.At(new CellPosition(0,1));
+            PointerEventData data = Data(first.gameObject);
+            ExecuteEvents.Execute(first.gameObject,data,ExecuteEvents.pointerDownHandler);
+            yield return Ready();
+            data.position = RectTransformUtility.WorldToScreenPoint(null,second.transform.position);
+            ExecuteEvents.Execute(first.gameObject,data,ExecuteEvents.dragHandler);
+            ExecuteEvents.Execute(first.gameObject,data,ExecuteEvents.pointerUpHandler);
+            Assert.That(app.Session.Turns,Is.EqualTo(1)); Assert.That(app.Session.MovesLeft,Is.EqualTo(19));
+        }
+        [UnityTest] public IEnumerator PauseAndContinueButtonsPreserveState()
+        {
+            Click(app.hud.pause); Assert.That(app.modal.activeSelf,Is.True); Assert.That(app.CanInput,Is.False);
+            Assert.That(app.popupTitle.text,Is.EqualTo("일시정지"));
+            yield return null;
+            Click(app.primary); Assert.That(app.modal.activeSelf,Is.False);
+            Assert.That(app.CanInput,Is.True); Assert.That(app.Session.MovesLeft,Is.EqualTo(20));
+            yield return null;
+        }
+        [UnityTest] public IEnumerator RestartRequiresConfirmationAndRestoresRealData()
+        {
+            Tap(new CellPosition(4,3)); Tap(new CellPosition(3,3)); yield return Ready();
+            // 기획서 13.2: 다시 시작은 일시정지 팝업 안에 있고, 이동을 썼으면 확인을 거칩니다.
+            Click(app.hud.pause); yield return null;
+            Click(app.secondary); Assert.That(app.popupTitle.text,Does.Contain("시작할까요"));
+            yield return null;
+            Click(app.primary); app.SkipIntro(); yield return Ready();
+            Assert.That(app.Session.MovesLeft,Is.EqualTo(20)); Assert.That(app.Session.Goals.Remaining(0),Is.EqualTo(12));
+            Assert.That(app.Session.Turns,Is.Zero); AssertSynchronized();
+        }
+        [UnityTest] public IEnumerator MapNodeOpensEntryPopupAndStartsLevel()
+        {
+            app.ShowMap(); yield return null;
+            Assert.That(app.gameScreen.activeSelf,Is.False); Assert.That(app.map.nodes[1].button.interactable,Is.False);
+            Click(app.map.nodes[0].button); yield return null;
+            Assert.That(app.modal.activeSelf,Is.True); Assert.That(app.popupTitle.text,Does.StartWith("레벨 1"));
+            Click(app.primary); app.SkipIntro(); yield return Ready();
+            Assert.That(app.gameScreen.activeSelf,Is.True); Assert.That(app.Session.Level.id,Is.EqualTo(1)); AssertSynchronized();
+        }
+        // 레벨 2: 가득 찬 세이지 초상화 클릭 → 미리보기 → [발동]. 이동은 그대로, 게이지 0, 파티 잠금(12.4).
+        [UnityTest] public IEnumerator PortraitPreviewAndUseSkillThroughRealButtons()
+        {
+            app.StartLevel(1,5,new[] { 105,0,0 }); app.SkipIntro(); yield return Ready();
+            Assert.That(app.hud.party.gameObject.activeSelf,Is.True);
+            Click(app.hud.party.slots[0].button);
+            Assert.That(app.PreviewSlot,Is.EqualTo(0)); Assert.That(app.CanInput,Is.False);
+            yield return null;
+            Click(app.hud.skillUse); yield return Ready();
+            Assert.That(app.Session.MovesLeft,Is.EqualTo(20)); Assert.That(app.Session.Gauge[0],Is.Zero);
+            Assert.That(app.Session.SkillLocked,Is.True);
+            Assert.That(app.LastEvents.Exists(e=>e.kind==GameEventKind.SkillUsed),Is.True); AssertSynchronized();
+        }
+        // 아이템이 처음 생긴 턴이 끝나면 설명 팝업이 한 번 뜹니다(레벨 4 안내 스왑 = 가로 4개 → 로켓).
+        [UnityTest] public IEnumerator FirstRocketShowsItemExplanationOnce()
+        {
+            app.StartLevel(3,63); app.SkipIntro(); yield return Ready();
+            DragSwap(new CellPosition(2,3),new CellPosition(3,3));
+            float deadline = Time.realtimeSinceStartup+12;
+            while (!app.ItemTutorialOpen && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(app.ItemTutorialOpen,Is.True); Assert.That(app.popupTitle.text,Is.EqualTo("새로운 아이템!"));
+            Assert.That(app.Busy,Is.True);
+            yield return null;
+            Click(app.primary); yield return Ready();
+            Assert.That(app.ItemTutorialOpen,Is.False); Assert.That(app.modal.activeSelf,Is.False); Assert.That(app.CanInput,Is.True);
+        }
+        [UnityTest] public IEnumerator DraggedRocketActivatesWithoutMatch()
+        {
+            CellPosition a = new CellPosition(0,0), b = new CellPosition(0,1); PlaceSpecial(a,OccupantKind.Rocket);
+            DragSwap(a,b); yield return Ready();
+            Assert.That(app.Session.MovesLeft,Is.EqualTo(19));
+            Assert.That(app.LastEvents.Exists(e=>e.kind==GameEventKind.SpecialActivated && e.position.Equals(b)),Is.True); AssertSynchronized();
+        }
+        [UnityTest] public IEnumerator RealMovesReachClearAndNextLevelButtonOpensLevelTwo()
+        {
+            for (int turn = 0; turn < 20 && app.Session.Outcome == SessionOutcome.Idle; turn++)
+            {
+                List<ValidMove> moves = MoveFinder.Find(app.Session.Board,false);
+                int bestScore = int.MinValue; ValidMove best = moves[0];
+                foreach (ValidMove move in moves)
+                {
+                    Board copy = app.Session.Board.Clone(); copy.Swap(move.a,move.b);
+                    int score = 0;
+                    foreach (MatchGroup group in MatchFinder.Find(copy,false))
+                    {
+                        if (group.color == BlockColor.R) score += group.cells.Count*10;
+                        if (group.GetSpecial().kind != OccupantKind.Empty) score += 3;
+                    }
+                    if (score > bestScore) { bestScore = score; best = move; }
+                }
+                DragSwap(best.a,best.b); yield return Ready();
+            }
+            Assert.That(app.Session.Outcome,Is.EqualTo(SessionOutcome.Clear));
+            Assert.That(app.modal.activeSelf,Is.True); Assert.That(app.popupTitle.text,Is.EqualTo("클리어!"));
+            Assert.That(app.primaryText.text,Is.EqualTo("다음 레벨"));
+            // 다음 레벨은 레벨 진입 팝업을 거쳐 [시작]으로 들어갑니다(13.1).
+            Click(app.primary); yield return null;
+            // 레벨 1 첫 클리어로 세이지가 합류하면 합류 팝업을 먼저 닫습니다(13.1).
+            Assert.That(app.popupTitle.text,Is.EqualTo("세이지 합류!"));
+            Click(app.primary); yield return null;
+            Assert.That(app.popupTitle.text,Does.StartWith("레벨 2"));
+            Click(app.primary); app.SkipIntro(); yield return Ready();
+            Assert.That(app.Session.Level.id,Is.EqualTo(2)); Assert.That(app.Session.MovesLeft,Is.EqualTo(20));
+        }
+    }
+}

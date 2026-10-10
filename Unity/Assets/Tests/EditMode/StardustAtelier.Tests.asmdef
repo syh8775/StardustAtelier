@@ -1,0 +1,1 @@
+{"name":"StardustAtelier.Tests","references":["StardustAtelier.Core","StardustAtelier.Meta"],"includePlatforms":["Editor"],"optionalUnityReferences":["TestAssemblies"]}

@@ -753,14 +753,23 @@ namespace StardustAtelier.View
                 SkillData skill = null;
                 foreach (SkillData s in catalog.skills) if (s.id == c.skillId) skill = s;
                 string attr; attrNames.TryGetValue(c.attr,out attr);
-                string body = attr+" 속성 · "+(skill != null ? skill.name : "");
-                int nextSlots = current+1 < levels.Count ? levels[current+1].partySlots : 0;
-                if (nextSlots > Session.Party.Length) body += "\n파티 슬롯이 "+nextSlots+"칸으로 늘었어요";
-                Popup(c.name+" 합류!",body,"확인",next,null,null,null,null);
+                // 본문은 두 줄: 속성, 그리고 스킬 이름과 효과 설명(예: 스킬 「물길」 · 맨 아래 줄을 한 번에 부숴요).
+                string body = attr+" 속성";
+                if (skill != null) body += "\n스킬 「"+skill.name+"」 · "+skill.desc;
+                // 제목은 "세이지를 만났어요!"처럼 만난 캐릭터를 알립니다. 슬롯 수 안내는 하지 않습니다.
+                Popup(c.name+ObjectParticle(c.name)+" 만났어요!",body,"확인",next,null,null,null,null);
                 ShowPicture(art.Portrait(c.id));
             };
         }
         private void ShowPicture(Sprite sprite)
+        // 이름 뒤에 붙는 조사: 받침이 있으면 "을", 없으면 "를"(솔을, 세이지를).
+        private static string ObjectParticle(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return "를";
+            char last = name[name.Length-1];
+            bool hangul = last >= 0xAC00 && last <= 0xD7A3;
+            return hangul && (last-0xAC00)%28 != 0 ? "을" : "를";
+        }
         {
             popupPictureImage.sprite = sprite;
             // 설명 그림은 가로로 넓고(3:2), 아이템·초상화는 정사각형입니다.
@@ -822,7 +831,15 @@ namespace StardustAtelier.View
             UnityEngine.UI.Button[] buttons = { primary, secondary, tertiary };
             int count = 0;
             foreach (UnityEngine.UI.Button button in buttons) if (button.gameObject.activeSelf) count++;
-            float height = 120+(row ? 250 : 0)+(body ? 120 : 0)+(party ? 300 : 0)+(goldRow ? 90 : 0)+(sound ? 220 : 0)+20+count*130+50;
+            // 본문은 두 줄까지 120, 그보다 길면(긴 스킬 설명) 줄 수만큼 칸을 늘려 그림·버튼과 겹치지 않게 합니다.
+            float bodyHeight = 120;
+            if (body)
+            {
+                popupBody.ForceMeshUpdate();
+                bodyHeight = Mathf.Max(120,popupBody.textInfo.lineCount*56+20);
+                popupBody.rectTransform.sizeDelta = new Vector2(popupBody.rectTransform.sizeDelta.x,bodyHeight);
+            }
+            float height = 120+(row ? 250 : 0)+(body ? bodyHeight : 0)+(party ? 300 : 0)+(goldRow ? 90 : 0)+(sound ? 220 : 0)+20+count*130+50;
             popupCard.sizeDelta = new Vector2(popupCard.sizeDelta.x,height);
             float y = height*0.5f;
             ((RectTransform)popupTitle.transform.parent).anchoredPosition = new Vector2(0,y);
@@ -833,7 +850,7 @@ namespace StardustAtelier.View
                     ((RectTransform)item.transform).anchoredPosition = new Vector2(0,y-125);
                 y -= 250;
             }
-            if (body) { ((RectTransform)popupBody.transform).anchoredPosition = new Vector2(0,y-55); y -= 120; }
+            if (body) { ((RectTransform)popupBody.transform).anchoredPosition = new Vector2(0,y-bodyHeight*0.5f+5); y -= bodyHeight; }
             if (sound) { ((RectTransform)popupSoundRow.transform).anchoredPosition = new Vector2(0,y-105); y -= 220; }
             if (goldRow) { ((RectTransform)popupGoldRow.transform).anchoredPosition = new Vector2(0,y-40); y -= 90; }
             if (party) { ((RectTransform)popupPartyRow.transform).anchoredPosition = new Vector2(0,y-150); y -= 300; }

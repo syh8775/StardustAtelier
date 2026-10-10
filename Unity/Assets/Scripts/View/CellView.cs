@@ -34,7 +34,7 @@ namespace StardustAtelier.View
             if (occupied)
             {
                 gem.sprite = SpriteFor(cell.occupant);
-                // 아이템은 보석 없이 아이템 그림만 그립니다(2026-10-10 사용자 변경). 겹침 표시는 쓰지 않습니다.
+                // 아이템은 보석 없이 아이템 그림만 그립니다. 겹침 표시는 쓰지 않습니다.
                 overlay.gameObject.SetActive(false);
             }
             chain.gameObject.SetActive(cell.chained);

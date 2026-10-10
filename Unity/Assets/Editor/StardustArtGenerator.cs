@@ -3,7 +3,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-// [실제 코드에 남길 주석] 최종 그림(GPT 생성 예정)이 오기 전까지 쓸 임시 그림을 코드로 그립니다.
+// [실제 코드에 남길 주석] 최종 그림이 오기 전까지 쓸 임시 그림을 코드로 그립니다.
 // 이미 있는 파일은 덮어쓰지 않습니다. 최종 그림을 같은 이름으로 넣으면 그대로 유지됩니다.
 // 다시 그리려면 해당 PNG를 지우고 Build를 실행합니다.
 public static class StardustArtGenerator

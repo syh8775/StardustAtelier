@@ -26,7 +26,7 @@ namespace StardustAtelier.Core
         public Orientation orientation;
         public int hp;
         public bool IsSpecial { get { return kind >= OccupantKind.Rocket && kind <= OccupantKind.Prism; } }
-        // 2026-10-10 사용자 변경: 로켓·폭탄·별똥별·프리즘은 색(속성)이 없는 아이템입니다. 색은 색 블록만 가집니다.
+        // 로켓·폭탄·별똥별·프리즘은 색(속성)이 없는 아이템입니다. 색은 색 블록만 가집니다.
         public bool IsColored { get { return kind == OccupantKind.ColorBlock; } }
         public static Occupant Empty { get { return new Occupant { color = BlockColor.None }; } }
         public static Occupant Block(BlockColor color) { return new Occupant { kind = OccupantKind.ColorBlock, color = color }; }

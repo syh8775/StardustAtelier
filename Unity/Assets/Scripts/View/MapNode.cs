@@ -25,7 +25,7 @@ namespace StardustAtelier.View
             button.interactable = open;
             face.color = !open ? lockedFace : best > 0 ? clearedFace : openFace;
             number.color = best > 0 || !open ? Color.white : new Color(0.24f,0.14f,0.05f);
-            // 고비 레벨은 붉은 테두리로만 표시합니다(사용자 변경 2026-10-10: "고비" 글자 표시 없음).
+            // 고비 레벨은 붉은 테두리로만 표시하고 "고비" 글자는 쓰지 않습니다.
             ring.color = hard ? new Color(0.95f,0.25f,0.30f) : open ? new Color(1f,0.93f,0.70f) : new Color(0.38f,0.34f,0.52f);
             currentGlow.SetActive(current);
             for (int i = 0; i < stars.Length; i++)

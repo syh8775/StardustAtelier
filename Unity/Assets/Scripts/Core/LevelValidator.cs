@@ -66,7 +66,7 @@ namespace StardustAtelier.Core
             else
             {
                 foreach (CharacterData character in characters.characters) if (character.unlockLevel<=level.id) owned++;
-                // 2026-10-10 사용자 변경: 레벨 2부터 3칸을 보여주고 빈 칸을 허용합니다. 슬롯이 있으면 보유 캐릭터가 1명 이상이어야 합니다.
+                // 레벨 2부터 3칸을 보여주고 빈 칸을 허용합니다. 슬롯이 있으면 보유 캐릭터가 1명 이상이어야 합니다.
                 if (level.partySlots<0 || level.partySlots>3 || (level.partySlots>0 && owned<1)) errors.Add("Party slots need at least one available character.");
                 if (level.recommended != null)
                     foreach (string color in level.recommended)

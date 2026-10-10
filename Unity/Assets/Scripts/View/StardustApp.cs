@@ -536,7 +536,7 @@ namespace StardustAtelier.View
             else if (Session.Outcome == SessionOutcome.Fail) { RecordAttempt(false); WriteProgress(); ShowResult(false); }
             Busy = false; hud.Busy(false); hintTime = 0;
         }
-        // ---- 아이템 첫 생성 설명(2026-10-10 사용자 변경, 기획서 13.4) ----
+        // ---- 아이템 첫 생성 설명(기획서 13.4) ----
         // 로켓·폭탄·프리즘·별똥별은 레벨과 상관없이 보드에 처음 생긴 턴이 끝날 때 한 번 설명합니다.
         // 매치·프리즘 조합·스킬 등 어떤 경로로 생겨도 같습니다. 진행 저장 전까지는 실행 중에만 기억합니다.
         private readonly HashSet<OccupantKind> itemsExplained = new HashSet<OccupantKind>();

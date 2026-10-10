@@ -192,6 +192,63 @@ namespace StardustAtelier.Tests
             Assert.That(events.Exists(e=>e.kind==GameEventKind.SpecialActivated && e.position.Equals(to) && e.occupant.kind==kind),Is.True);
         }
 
+        // 셔플로도 수를 만들 수 없으면 섞기를 3번 시도한 뒤, 이동 횟수가 남아도 실패하고 그 이유를 남깁니다(9.3).
+        // (모든 칸을 얼리는 것은 실제 레벨에 없는 상황이고, 수가 전혀 없는 보드를 만드는 가장 간단한 방법이라 씁니다.)
+        [Test] public void NoPossibleMoveFailsAndMarksTheReason()
+        {
+            GameSession session = new GameSession(FirstLevel(),Config(),63);
+            Assert.That(session.NoMoves,Is.False);
+            foreach (CellPosition p in session.Board.Positions()) session.Board[p].ice = 2;
+            CellPosition rocket = new CellPosition(0,0);
+            session.Board[rocket].occupant = new Occupant { kind=OccupantKind.Rocket,color=BlockColor.None,orientation=Orientation.H };
+            List<GameEvent> events = session.Activate(rocket);
+            Assert.That(session.MovesLeft,Is.GreaterThan(0));
+            Assert.That(session.Outcome,Is.EqualTo(SessionOutcome.Fail));
+            Assert.That(session.NoMoves,Is.True);
+            Assert.That(events.FindAll(e=>e.kind==GameEventKind.Shuffled).Count,Is.EqualTo(3));
+        }
+        // 수가 없는 보드라도 섞어서 수가 생기면 그 자리에서 멈추고 계속 진행합니다(실패하지 않음).
+        [Test] public void ShuffleStopsAsSoonAsAMoveAppears()
+        {
+            int shuffledGames = 0;
+            for (ulong seed = 1; seed <= 30; seed++)
+            {
+                GameSession session = new GameSession(FirstLevel(),Config(),seed);
+                // 색을 줄무늬로 깔아 매치도 유효한 수도 없게 만들고, 로켓 하나를 눌러 턴을 넘깁니다.
+                foreach (CellPosition p in session.Board.Positions())
+                    session.Board[p].occupant = Occupant.Block((BlockColor)((p.r*2+p.c)%5));
+                CellPosition rocket = new CellPosition(0,0);
+                session.Board[rocket].occupant = new Occupant { kind=OccupantKind.Rocket,color=BlockColor.None,orientation=Orientation.H };
+                List<GameEvent> events = session.Activate(rocket);
+                if (session.Outcome != SessionOutcome.Idle) continue;
+                int shuffles = events.FindAll(e=>e.kind==GameEventKind.Shuffled).Count;
+                Assert.That(shuffles,Is.LessThanOrEqualTo(3),"seed "+seed);
+                Assert.That(session.NoMoves,Is.False,"seed "+seed);
+                Assert.That(MoveFinder.HasAction(session.Board,false),Is.True,"seed "+seed);
+                if (shuffles > 0) shuffledGames++;
+            }
+            // 이 검사가 실제로 섞는 경우를 거쳤는지 확인합니다.
+            Assert.That(shuffledGames,Is.GreaterThan(0));
+        }
+        // 보드에 아이템이 남아 있으면 그것을 눌러 판을 바꿀 수 있으므로, 옮길 블록이 없어도 섞지 않습니다.
+        // (위 검사와 같은 줄무늬 보드·같은 시드에 아이템 하나만 더 둔 것이라, 아이템이 없었다면 섞였을 판이 포함됩니다.)
+        [Test] public void NoShuffleWhileAnItemRemains()
+        {
+            for (ulong seed = 1; seed <= 30; seed++)
+            {
+                GameSession session = new GameSession(FirstLevel(),Config(),seed);
+                foreach (CellPosition p in session.Board.Positions())
+                    session.Board[p].occupant = Occupant.Block((BlockColor)((p.r*2+p.c)%5));
+                CellPosition rocket = new CellPosition(0,0), spare = new CellPosition(6,6);
+                session.Board[rocket].occupant = new Occupant { kind=OccupantKind.Rocket,color=BlockColor.None,orientation=Orientation.H };
+                session.Board[spare].occupant = new Occupant { kind=OccupantKind.Bomb,color=BlockColor.None };
+                List<GameEvent> events = session.Activate(rocket);
+                Assert.That(session.Board[spare].occupant.kind,Is.EqualTo(OccupantKind.Bomb),"seed "+seed);
+                Assert.That(events.Exists(e=>e.kind==GameEventKind.Shuffled),Is.False,"seed "+seed);
+                Assert.That(session.Outcome,Is.EqualTo(SessionOutcome.Idle),"seed "+seed);
+            }
+        }
+
         // 단독 클릭의 효과·이동·잠금·종료 판정을 기존 턴과 같은 경로로 검사합니다.
         [TestCase(OccupantKind.Rocket)]
         [TestCase(OccupantKind.Bomb)]

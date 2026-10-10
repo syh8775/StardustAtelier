@@ -92,7 +92,7 @@ namespace StardustAtelier.View
                 else if (item.kind == GameEventKind.Shuffled)
                 {
                     // 기획서 9.3 문구를 셔플 시간 동안 표시합니다.
-                    hud.ShowTip("둘 수 있는 블록이 없어 섞습니다");
+                    hud.ShowTip("이동할 수 있는 블록이 없어 셔플합니다");
                     yield return new WaitForSecondsRealtime(timing.shuffleSec);
                     board.Configure(item.board,(int)((RectTransform)board.transform).sizeDelta.x);
                     hud.HideTip();

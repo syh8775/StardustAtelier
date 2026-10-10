@@ -533,8 +533,9 @@ namespace StardustAtelier.View
         private IEnumerator ReplayTurn()
         {
             EventPlayer player = new EventPlayer(board,hud,Config.timing);
+            // 아이템이 처음 생기면 연쇄 도중이라도 재생을 잠시 멈추고 설명 팝업을 띄웁니다.
+            player.ItemCreated = ExplainItem;
             yield return player.Play(LastEvents);
-            yield return ExplainNewItems();
             // 안내형 튜토리얼 말풍선은 첫 턴이 끝나면 닫습니다.
             if (!IsGuidedTurn() && !IsGuidedSkill()) hud.HideTip();
             hud.party.Refresh();
@@ -565,7 +566,7 @@ namespace StardustAtelier.View
             Busy = false; hud.Busy(false); hintTime = 0;
         }
         // ---- 아이템 첫 생성 설명(기획서 13.4) ----
-        // 로켓·폭탄·프리즘·별똥별은 레벨과 상관없이 보드에 처음 생긴 턴이 끝날 때 한 번 설명합니다.
+        // 로켓·폭탄·프리즘·별똥별은 레벨과 상관없이 보드에 처음 생긴 즉시(연쇄 도중에도) 한 번 설명합니다.
         // 매치·프리즘 조합·스킬 등 어떤 경로로 생겨도 같습니다. 진행 저장 전까지는 실행 중에만 기억합니다.
         private readonly HashSet<OccupantKind> itemsExplained = new HashSet<OccupantKind>();
         public bool ItemTutorialOpen { get; private set; }
@@ -576,24 +577,24 @@ namespace StardustAtelier.View
             { OccupantKind.Prism, "5개를 일자로 맞추면 프리즘이 생겨요.\n블록과 바꾸면 그 색을 모두 없애요" },
             { OccupantKind.Meteor, "2×2로 맞추면 별똥별이 생겨요.\n별똥별은 목표를 찾아가요" },
         };
-        private IEnumerator ExplainNewItems()
+        // 이미 설명했거나 설명이 없는 종류면 null을 돌려줘 재생을 멈추지 않습니다.
+        private IEnumerator ExplainItem(OccupantKind kind)
         {
-            List<OccupantKind> fresh = new List<OccupantKind>();
-            foreach (GameEvent item in LastEvents)
-                if (item.kind == GameEventKind.SpecialCreated && itemTexts.ContainsKey(item.occupant.kind) &&
-                    !itemsExplained.Contains(item.occupant.kind) && !fresh.Contains(item.occupant.kind))
-                    fresh.Add(item.occupant.kind);
-            foreach (OccupantKind kind in fresh)
-            {
-                itemsExplained.Add(kind); WriteProgress();
-                bool closed = false;
-                Popup("새로운 아이템!",itemTexts[kind],"확인",() => { modal.SetActive(false); closed = true; },null,null,null,null);
-                ShowPicture(ItemPicture(kind));
-                ItemTutorialOpen = true;
-                // 뒤로 가기로 팝업을 닫아도 진행이 멈추지 않게, 팝업이 닫히면 끝냅니다.
-                while (!closed && modal.activeSelf) yield return null;
-                modal.SetActive(false); ItemTutorialOpen = false;
-            }
+            if (!itemTexts.ContainsKey(kind) || itemsExplained.Contains(kind)) return null;
+            itemsExplained.Add(kind); WriteProgress();
+            return ShowItemExplanation(kind);
+        }
+        private IEnumerator ShowItemExplanation(OccupantKind kind)
+        {
+            // 새로 생긴 아이템이 보드에 보인 뒤에 팝업을 띄웁니다.
+            yield return new WaitForSecondsRealtime(0.25f);
+            bool closed = false;
+            Popup("새로운 아이템!",itemTexts[kind],"확인",() => { modal.SetActive(false); closed = true; },null,null,null,null);
+            ShowPicture(ItemPicture(kind));
+            ItemTutorialOpen = true;
+            // 뒤로 가기로 팝업을 닫아도 진행이 멈추지 않게, 팝업이 닫히면 끝냅니다.
+            while (!closed && modal.activeSelf) yield return null;
+            modal.SetActive(false); ItemTutorialOpen = false;
         }
         private Sprite ItemPicture(OccupantKind kind)
         {
@@ -761,7 +762,6 @@ namespace StardustAtelier.View
                 ShowPicture(art.Portrait(c.id));
             };
         }
-        private void ShowPicture(Sprite sprite)
         // 이름 뒤에 붙는 조사: 받침이 있으면 "을", 없으면 "를"(솔을, 세이지를).
         private static string ObjectParticle(string name)
         {
@@ -770,6 +770,7 @@ namespace StardustAtelier.View
             bool hangul = last >= 0xAC00 && last <= 0xD7A3;
             return hangul && (last-0xAC00)%28 != 0 ? "을" : "를";
         }
+        private void ShowPicture(Sprite sprite)
         {
             popupPictureImage.sprite = sprite;
             // 설명 그림은 가로로 넓고(3:2), 아이템·초상화는 정사각형입니다.

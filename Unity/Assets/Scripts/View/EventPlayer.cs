@@ -15,6 +15,8 @@ namespace StardustAtelier.View
         private AudioService Audio { get { return hud.audioService; } }
         private VfxService Fx { get { return hud.vfx; } }
         public EventPlayer(BoardView view, HudView header, TimingConfig values) { board = view; hud = header; timing = values; }
+        // 아이템이 새로 생길 때 부릅니다. 돌려준 것이 있으면 그것이 끝날 때까지 재생을 멈춥니다(첫 생성 설명 팝업).
+        public System.Func<OccupantKind,IEnumerator> ItemCreated;
 
         public IEnumerator Play(List<GameEvent> events)
         {
@@ -50,7 +52,12 @@ namespace StardustAtelier.View
                 {
                     board.ViewBoard[item.position].occupant = item.occupant;
                     board.At(item.position).Render(board.ViewBoard[item.position]);
-                    if (item.kind == GameEventKind.SpecialCreated) Effect(Fx != null ? Fx.itemCreate : null,item.position,Gold);
+                    if (item.kind == GameEventKind.SpecialCreated)
+                    {
+                        Effect(Fx != null ? Fx.itemCreate : null,item.position,Gold);
+                        IEnumerator pause = ItemCreated != null ? ItemCreated(item.occupant.kind) : null;
+                        if (pause != null) yield return pause;
+                    }
                     else { SpreadVine(item.position); yield return new WaitForSecondsRealtime(timing.vineSpreadSec); }
                 }
                 else if (item.kind == GameEventKind.SkillUsed)
@@ -150,13 +157,6 @@ namespace StardustAtelier.View
             }
             return 0;
         }
-        // 발동 뒤에 이어지는 타격 칸들(다음 발동이나 낙하 전까지).
-        private List<Vector2> HitsAfter(List<GameEvent> events, int index, int limit)
-        {
-            List<Vector2> result = new List<Vector2>();
-            for (int i = index+1; i < events.Count && result.Count < limit; i++)
-            {
-                GameEventKind kind = events[i].kind;
         // 조합(6.4)별 연출. 모이는 빛(조합 시작) 뒤에 이어서 터지도록 지연을 주고, 그 길이를 돌려줍니다.
         private float Combo(GameEvent item, Vector2 at, float cell, float size)
         {
@@ -194,6 +194,13 @@ namespace StardustAtelier.View
             if (Audio != null) Audio.Play(a == OccupantKind.Meteor || b == OccupantKind.Meteor ? Audio.meteor : Audio.prism);
             return 0;
         }
+        // 발동 뒤에 이어지는 타격 칸들(다음 발동이나 낙하 전까지).
+        private List<Vector2> HitsAfter(List<GameEvent> events, int index, int limit)
+        {
+            List<Vector2> result = new List<Vector2>();
+            for (int i = index+1; i < events.Count && result.Count < limit; i++)
+            {
+                GameEventKind kind = events[i].kind;
                 if (kind == GameEventKind.SpecialActivated || kind == GameEventKind.Fell || kind == GameEventKind.Spawned || kind == GameEventKind.StepEnded) break;
                 if (kind == GameEventKind.CellHit) result.Add(board.Local(events[i].position));
             }

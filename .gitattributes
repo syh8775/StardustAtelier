@@ -1,0 +1,19 @@
+# 줄바꿈은 Git이 자동으로 맞춥니다.
+* text=auto
+
+# Unity YAML(씬·프리팹·에셋)은 텍스트로 다루되 자동 병합하지 않습니다.
+*.unity text merge=unityyamlmerge eol=lf
+*.prefab text merge=unityyamlmerge eol=lf
+*.asset text merge=unityyamlmerge eol=lf
+*.meta text eol=lf
+*.mat text eol=lf
+
+# 바이너리
+*.png binary
+*.jpg binary
+*.otf binary
+*.ttf binary
+*.exr binary
+*.wav binary
+*.mp3 binary
+*.ogg binary

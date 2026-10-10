@@ -1,0 +1,45 @@
+# ---- Unity: 에디터가 다시 생성하는 로컬 파일 ----
+Unity/[Ll]ibrary/
+Unity/[Tt]emp/
+Unity/[Oo]bj/
+Unity/[Ll]ogs/
+Unity/[Uu]ser[Ss]ettings/
+Unity/[Mm]emoryCaptures/
+Unity/[Rr]ecordings/
+
+# 빌드 결과물(용량이 크고 언제든 다시 만들 수 있음)
+Unity/[Bb]uild/
+Unity/[Bb]uilds/
+Unity/[Bb]uild[Ss]ettings*.json
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# IDE·솔루션 파일(Unity가 자동 생성)
+Unity/.vs/
+Unity/.vscode/
+Unity/.idea/
+Unity/*.csproj
+Unity/*.unityproj
+Unity/*.sln
+Unity/*.slnx
+Unity/*.suo
+Unity/*.user
+Unity/*.userprefs
+Unity/*.pidb
+Unity/*.booproj
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity 크래시·로컬 디버그 파일
+Unity/sysinfo.txt
+Unity/mono_crash.*
+Unity/crashlytics-buildid.txt
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+Desktop.ini

@@ -277,7 +277,10 @@ namespace StardustAtelier.View
             Load(); StopAllCoroutines(); current = index;
             LevelData level = levels[index];
             int[] ids = party != null && party.Length == level.partySlots ? party : DefaultParty(level);
-            Session = new GameSession(level,Config,seed ?? unchecked((ulong)DateTime.UtcNow.Ticks),BuildParty(ids));
+            // 실패 보정(10.5): 이 레벨을 연속 3회(assistFailThreshold) 이상 실패했고 고비 레벨이 아니면 그 판 내내 켭니다.
+            bool assisted = !level.hard && save != null &&
+                SaveService.Level(save,level.id).consecutiveFails >= Config.rules.assistFailThreshold;
+            Session = new GameSession(level,Config,seed ?? unchecked((ulong)DateTime.UtcNow.Ticks),BuildParty(ids),assisted);
             lastParty = (int[])ids.Clone();
             selection = null; LastEvents = new List<GameEvent>(); PreviewSlot = -1;
             modal.SetActive(false); picker.SetActive(false); clearBanner.SetActive(false);
@@ -530,8 +533,9 @@ namespace StardustAtelier.View
         private IEnumerator ReplayTurn()
         {
             EventPlayer player = new EventPlayer(board,hud,Config.timing);
+            // 아이템이 처음 생기면 연쇄 도중이라도 재생을 잠시 멈추고 설명 팝업을 띄웁니다.
+            player.ItemCreated = ExplainItem;
             yield return player.Play(LastEvents);
-            yield return ExplainNewItems();
             // 안내형 튜토리얼 말풍선은 첫 턴이 끝나면 닫습니다.
             if (!IsGuidedTurn() && !IsGuidedSkill()) hud.HideTip();
             hud.party.Refresh();
@@ -562,7 +566,7 @@ namespace StardustAtelier.View
             Busy = false; hud.Busy(false); hintTime = 0;
         }
         // ---- 아이템 첫 생성 설명(기획서 13.4) ----
-        // 로켓·폭탄·프리즘·별똥별은 레벨과 상관없이 보드에 처음 생긴 턴이 끝날 때 한 번 설명합니다.
+        // 로켓·폭탄·프리즘·별똥별은 레벨과 상관없이 보드에 처음 생긴 즉시(연쇄 도중에도) 한 번 설명합니다.
         // 매치·프리즘 조합·스킬 등 어떤 경로로 생겨도 같습니다. 진행 저장 전까지는 실행 중에만 기억합니다.
         private readonly HashSet<OccupantKind> itemsExplained = new HashSet<OccupantKind>();
         public bool ItemTutorialOpen { get; private set; }
@@ -573,24 +577,24 @@ namespace StardustAtelier.View
             { OccupantKind.Prism, "5개를 일자로 맞추면 프리즘이 생겨요.\n블록과 바꾸면 그 색을 모두 없애요" },
             { OccupantKind.Meteor, "2×2로 맞추면 별똥별이 생겨요.\n별똥별은 목표를 찾아가요" },
         };
-        private IEnumerator ExplainNewItems()
+        // 이미 설명했거나 설명이 없는 종류면 null을 돌려줘 재생을 멈추지 않습니다.
+        private IEnumerator ExplainItem(OccupantKind kind)
         {
-            List<OccupantKind> fresh = new List<OccupantKind>();
-            foreach (GameEvent item in LastEvents)
-                if (item.kind == GameEventKind.SpecialCreated && itemTexts.ContainsKey(item.occupant.kind) &&
-                    !itemsExplained.Contains(item.occupant.kind) && !fresh.Contains(item.occupant.kind))
-                    fresh.Add(item.occupant.kind);
-            foreach (OccupantKind kind in fresh)
-            {
-                itemsExplained.Add(kind); WriteProgress();
-                bool closed = false;
-                Popup("새로운 아이템!",itemTexts[kind],"확인",() => { modal.SetActive(false); closed = true; },null,null,null,null);
-                ShowPicture(ItemPicture(kind));
-                ItemTutorialOpen = true;
-                // 뒤로 가기로 팝업을 닫아도 진행이 멈추지 않게, 팝업이 닫히면 끝냅니다.
-                while (!closed && modal.activeSelf) yield return null;
-                modal.SetActive(false); ItemTutorialOpen = false;
-            }
+            if (!itemTexts.ContainsKey(kind) || itemsExplained.Contains(kind)) return null;
+            itemsExplained.Add(kind); WriteProgress();
+            return ShowItemExplanation(kind);
+        }
+        private IEnumerator ShowItemExplanation(OccupantKind kind)
+        {
+            // 새로 생긴 아이템이 보드에 보인 뒤에 팝업을 띄웁니다.
+            yield return new WaitForSecondsRealtime(0.25f);
+            bool closed = false;
+            Popup("새로운 아이템!",itemTexts[kind],"확인",() => { modal.SetActive(false); closed = true; },null,null,null,null);
+            ShowPicture(ItemPicture(kind));
+            ItemTutorialOpen = true;
+            // 뒤로 가기로 팝업을 닫아도 진행이 멈추지 않게, 팝업이 닫히면 끝냅니다.
+            while (!closed && modal.activeSelf) yield return null;
+            modal.SetActive(false); ItemTutorialOpen = false;
         }
         private Sprite ItemPicture(OccupantKind kind)
         {
@@ -661,7 +665,10 @@ namespace StardustAtelier.View
             if (!Playable(index) || index > unlocked) return;
             LevelData level = levels[index];
             entryParty = DefaultParty(level); entryIndex = index;
-            Popup("레벨 "+level.id,"이동 "+level.moves,
+            // 별 기준(10.4): 클리어하면 별 1개, 이동을 일정 수 이상 남기면 2개·3개입니다.
+            string stars = "별 2개 · 이동 "+GameSession.StarMoves(level.moves,Config.rules.star2MovesRatio)+" 이상 남기기\n"+
+                "별 3개 · 이동 "+GameSession.StarMoves(level.moves,Config.rules.star3MovesRatio)+" 이상 남기기";
+            Popup("레벨 "+level.id,"이동 "+level.moves+"\n"+stars,
                 "시작",() => StartLevel(index,null,(int[])entryParty.Clone()),"닫기",() => modal.SetActive(false),null,null);
             ShowGoals(level,null);
             // 슬롯 0칸인 레벨은 파티·추천 속성 영역을 숨깁니다.
@@ -747,12 +754,21 @@ namespace StardustAtelier.View
                 SkillData skill = null;
                 foreach (SkillData s in catalog.skills) if (s.id == c.skillId) skill = s;
                 string attr; attrNames.TryGetValue(c.attr,out attr);
-                string body = attr+" 속성 · "+(skill != null ? skill.name : "");
-                int nextSlots = current+1 < levels.Count ? levels[current+1].partySlots : 0;
-                if (nextSlots > Session.Party.Length) body += "\n파티 슬롯이 "+nextSlots+"칸으로 늘었어요";
-                Popup(c.name+" 합류!",body,"확인",next,null,null,null,null);
+                // 본문은 두 줄: 속성, 그리고 스킬 이름과 효과 설명(예: 스킬 「물길」 · 맨 아래 줄을 한 번에 부숴요).
+                string body = attr+" 속성";
+                if (skill != null) body += "\n스킬 「"+skill.name+"」 · "+skill.desc;
+                // 제목은 "세이지를 만났어요!"처럼 만난 캐릭터를 알립니다. 슬롯 수 안내는 하지 않습니다.
+                Popup(c.name+ObjectParticle(c.name)+" 만났어요!",body,"확인",next,null,null,null,null);
                 ShowPicture(art.Portrait(c.id));
             };
+        }
+        // 이름 뒤에 붙는 조사: 받침이 있으면 "을", 없으면 "를"(솔을, 세이지를).
+        private static string ObjectParticle(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return "를";
+            char last = name[name.Length-1];
+            bool hangul = last >= 0xAC00 && last <= 0xD7A3;
+            return hangul && (last-0xAC00)%28 != 0 ? "을" : "를";
         }
         private void ShowPicture(Sprite sprite)
         {
@@ -816,7 +832,15 @@ namespace StardustAtelier.View
             UnityEngine.UI.Button[] buttons = { primary, secondary, tertiary };
             int count = 0;
             foreach (UnityEngine.UI.Button button in buttons) if (button.gameObject.activeSelf) count++;
-            float height = 120+(row ? 250 : 0)+(body ? 120 : 0)+(party ? 300 : 0)+(goldRow ? 90 : 0)+(sound ? 220 : 0)+20+count*130+50;
+            // 본문은 두 줄까지 120, 그보다 길면(긴 스킬 설명) 줄 수만큼 칸을 늘려 그림·버튼과 겹치지 않게 합니다.
+            float bodyHeight = 120;
+            if (body)
+            {
+                popupBody.ForceMeshUpdate();
+                bodyHeight = Mathf.Max(120,popupBody.textInfo.lineCount*56+20);
+                popupBody.rectTransform.sizeDelta = new Vector2(popupBody.rectTransform.sizeDelta.x,bodyHeight);
+            }
+            float height = 120+(row ? 250 : 0)+(body ? bodyHeight : 0)+(party ? 300 : 0)+(goldRow ? 90 : 0)+(sound ? 220 : 0)+20+count*130+50;
             popupCard.sizeDelta = new Vector2(popupCard.sizeDelta.x,height);
             float y = height*0.5f;
             ((RectTransform)popupTitle.transform.parent).anchoredPosition = new Vector2(0,y);
@@ -827,7 +851,7 @@ namespace StardustAtelier.View
                     ((RectTransform)item.transform).anchoredPosition = new Vector2(0,y-125);
                 y -= 250;
             }
-            if (body) { ((RectTransform)popupBody.transform).anchoredPosition = new Vector2(0,y-55); y -= 120; }
+            if (body) { ((RectTransform)popupBody.transform).anchoredPosition = new Vector2(0,y-bodyHeight*0.5f+5); y -= bodyHeight; }
             if (sound) { ((RectTransform)popupSoundRow.transform).anchoredPosition = new Vector2(0,y-105); y -= 220; }
             if (goldRow) { ((RectTransform)popupGoldRow.transform).anchoredPosition = new Vector2(0,y-40); y -= 90; }
             if (party) { ((RectTransform)popupPartyRow.transform).anchoredPosition = new Vector2(0,y-150); y -= 300; }

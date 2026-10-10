@@ -219,7 +219,8 @@ namespace StardustAtelier.Core
             Occupant first = board[a].occupant, second = board[b].occupant;
             List<CellPosition> consumed = new List<CellPosition> { a, b };
             bool firstPrism = first.kind == OccupantKind.Prism, secondPrism = second.kind == OccupantKind.Prism;
-            events.Add(new GameEvent(GameEventKind.SpecialActivated,b) { occupant = second, value = 2 });
+            // 조합 이벤트: occupant = 도착 칸(B)의 것, index = 옮겨 온 것(A)의 종류. 화면이 조합별 연출을 고르는 데 씁니다.
+            events.Add(new GameEvent(GameEventKind.SpecialActivated,b) { occupant = second, value = 2, index = (int)first.kind });
             if ((firstPrism && second.kind == OccupantKind.ColorBlock) || (secondPrism && first.kind == OccupantKind.ColorBlock))
             {
                 BlockColor color = firstPrism ? second.color : first.color;

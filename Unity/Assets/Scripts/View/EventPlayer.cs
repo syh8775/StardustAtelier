@@ -15,6 +15,8 @@ namespace StardustAtelier.View
         private AudioService Audio { get { return hud.audioService; } }
         private VfxService Fx { get { return hud.vfx; } }
         public EventPlayer(BoardView view, HudView header, TimingConfig values) { board = view; hud = header; timing = values; }
+        // 아이템이 새로 생길 때 부릅니다. 돌려준 것이 있으면 그것이 끝날 때까지 재생을 멈춥니다(첫 생성 설명 팝업).
+        public System.Func<OccupantKind,IEnumerator> ItemCreated;
 
         public IEnumerator Play(List<GameEvent> events)
         {
@@ -50,7 +52,12 @@ namespace StardustAtelier.View
                 {
                     board.ViewBoard[item.position].occupant = item.occupant;
                     board.At(item.position).Render(board.ViewBoard[item.position]);
-                    if (item.kind == GameEventKind.SpecialCreated) Effect(Fx != null ? Fx.itemCreate : null,item.position,Gold);
+                    if (item.kind == GameEventKind.SpecialCreated)
+                    {
+                        Effect(Fx != null ? Fx.itemCreate : null,item.position,Gold);
+                        IEnumerator pause = ItemCreated != null ? ItemCreated(item.occupant.kind) : null;
+                        if (pause != null) yield return pause;
+                    }
                     else { SpreadVine(item.position); yield return new WaitForSecondsRealtime(timing.vineSpreadSec); }
                 }
                 else if (item.kind == GameEventKind.SkillUsed)
@@ -118,9 +125,8 @@ namespace StardustAtelier.View
             // value 2 = 아이템 두 개(또는 프리즘+색 블록)를 합친 조합입니다.
             if (item.value == 2)
             {
-                if (Audio != null) Audio.Play(Audio.prism);
                 if (Fx != null) Fx.Play(Fx.comboStart,at,Gold,cell);
-                return timing.comboIntroSec;
+                return timing.comboIntroSec+Combo(item,at,cell,size);
             }
             switch (item.occupant.kind)
             {
@@ -149,6 +155,43 @@ namespace StardustAtelier.View
                     return timing.prismSec;
                 }
             }
+            return 0;
+        }
+        // 조합(6.4)별 연출. 모이는 빛(조합 시작) 뒤에 이어서 터지도록 지연을 주고, 그 길이를 돌려줍니다.
+        private float Combo(GameEvent item, Vector2 at, float cell, float size)
+        {
+            OccupantKind a = (OccupantKind)item.index, b = item.occupant.kind;
+            bool rocket = a == OccupantKind.Rocket || b == OccupantKind.Rocket;
+            bool bomb = a == OccupantKind.Bomb || b == OccupantKind.Bomb;
+            float delay = timing.comboIntroSec;
+            if (a == OccupantKind.Bomb && b == OccupantKind.Bomb)
+            {
+                // 폭탄 + 폭탄: 5×5 큰 폭발.
+                if (Audio != null) Audio.Play(Audio.bomb);
+                if (Fx != null) Fx.Play(Fx.bombBig,at,Gold,cell,0,null,null,delay);
+                return timing.bombSec;
+            }
+            if (a == OccupantKind.Rocket && b == OccupantKind.Rocket)
+            {
+                // 로켓 + 로켓: 중심의 행과 열.
+                if (Audio != null) Audio.Play(Audio.rocket);
+                if (Fx != null) { Fx.Play(Fx.rocketH,at,Gold,cell,size*2,null,null,delay); Fx.Play(Fx.rocketV,at,Gold,cell,size*2,null,null,delay); }
+                return timing.rocketSec;
+            }
+            if (rocket && bomb)
+            {
+                // 로켓 + 폭탄: 중심 행·열과 그 양옆, 세 줄씩.
+                if (Audio != null) { Audio.Play(Audio.rocket); Audio.Play(Audio.bomb); }
+                if (Fx != null)
+                    for (int offset = -1; offset <= 1; offset++)
+                    {
+                        Fx.Play(Fx.rocketH,at+new Vector2(0,offset*cell),Gold,cell,size*2,null,null,delay);
+                        Fx.Play(Fx.rocketV,at+new Vector2(offset*cell,0),Gold,cell,size*2,null,null,delay);
+                    }
+                return timing.rocketSec;
+            }
+            // 프리즘·별똥별이 낀 조합은 모이는 빛과 프리즘 소리로 알립니다.
+            if (Audio != null) Audio.Play(a == OccupantKind.Meteor || b == OccupantKind.Meteor ? Audio.meteor : Audio.prism);
             return 0;
         }
         // 발동 뒤에 이어지는 타격 칸들(다음 발동이나 낙하 전까지).

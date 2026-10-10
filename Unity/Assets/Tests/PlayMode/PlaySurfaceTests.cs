@@ -94,6 +94,23 @@ namespace StardustAtelier.PlayTests
             Click(app.primary); yield return null;
             Assert.That(app.modal.activeSelf,Is.False);
         }
+        // 실패 보정(10.5): 같은 레벨을 연속 3회 실패하면 켜지고, 고비 레벨은 켜지지 않습니다.
+        [UnityTest] public IEnumerator AssistTurnsOnAfterThreeFailsExceptHardLevels()
+        {
+            StardustAtelier.Meta.SaveData data = new StardustAtelier.Meta.SaveData();
+            for (int id = 1; id <= 9; id++) { StardustAtelier.Meta.LevelSave cleared = StardustAtelier.Meta.SaveService.Level(data,id); cleared.cleared = true; cleared.bestStars = 1; }
+            StardustAtelier.Meta.SaveService.Level(data,2).consecutiveFails = 2;
+            StardustAtelier.Meta.SaveService.Level(data,3).consecutiveFails = 3;
+            StardustAtelier.Meta.SaveService.Level(data,10).consecutiveFails = 5;   // 레벨 10은 고비
+            StardustAtelier.Meta.SaveService.Save(saveDirectory,data);
+            SceneManager.LoadScene("Stardust");
+            yield return null; yield return null;
+            app = UnityEngine.Object.FindFirstObjectByType<StardustApp>();
+            app.StartLevel(1,7); Assert.That(app.Session.Assisted,Is.False);
+            app.StartLevel(2,7); Assert.That(app.Session.Assisted,Is.True);
+            app.StartLevel(9,7); Assert.That(app.Session.Level.hard,Is.True); Assert.That(app.Session.Assisted,Is.False);
+            app.SkipIntro(); yield return Ready();
+        }
         private IEnumerator Ready()
         {
             float deadline = Time.realtimeSinceStartup+12;
@@ -347,7 +364,7 @@ namespace StardustAtelier.PlayTests
             // 다음 레벨은 레벨 진입 팝업을 거쳐 [시작]으로 들어갑니다(13.1).
             Click(app.primary); yield return null;
             // 레벨 1 첫 클리어로 세이지가 합류하면 합류 팝업을 먼저 닫습니다(13.1).
-            Assert.That(app.popupTitle.text,Is.EqualTo("세이지 합류!"));
+            Assert.That(app.popupTitle.text,Is.EqualTo("세이지를 만났어요!"));
             Click(app.primary); yield return null;
             Assert.That(app.popupTitle.text,Does.StartWith("레벨 2"));
             Click(app.primary); app.SkipIntro(); yield return Ready();

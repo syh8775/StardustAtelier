@@ -103,6 +103,19 @@ namespace StardustAtelier.Tests
             Assert.That(goals.Complete,Is.True);
             Assert.That(events.FindAll(e=>e.kind==GameEventKind.ObstacleDamaged).Count,Is.EqualTo(1));
         }
+        // 조합 이벤트는 옮겨 온 아이템(A)과 도착 칸 아이템(B)의 종류를 함께 알려 줍니다.
+        [Test] public void ComboEventCarriesBothItemKinds()
+        {
+            Board board = Make("RBGYP","BGYPR","GYPRB","YPRBG","PRBGY");
+            board[2,2].occupant = new Occupant { kind=OccupantKind.Bomb,color=BlockColor.None };
+            board[2,3].occupant = new Occupant { kind=OccupantKind.Rocket,color=BlockColor.None,orientation=Orientation.H };
+            List<GameEvent> events = new List<GameEvent>();
+            new Resolver(board,new GoalTracker(new[] { new GoalData { type="Collect",color="R",count=1 } }),1).ResolveCombo(new CellPosition(2,2),new CellPosition(2,3),events);
+            GameEvent combo = events.Find(e=>e.kind==GameEventKind.SpecialActivated && e.value==2);
+            Assert.That((OccupantKind)combo.index,Is.EqualTo(OccupantKind.Bomb));
+            Assert.That(combo.occupant.kind,Is.EqualTo(OccupantKind.Rocket));
+            Assert.That(combo.position,Is.EqualTo(new CellPosition(2,3)));
+        }
         [Test] public void PrismRocketConvertsOnlyUnchainedMostCommonColor()
         {
             Board board = Make("RRR","RRG","BGY"); board[1,1].chained = true;

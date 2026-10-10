@@ -514,18 +514,38 @@ namespace StardustAtelier.View
                 else if (Keyboard.current.homeKey.wasPressedThisFrame) JumpLevel(-levels.Count);
                 else if (Keyboard.current.endKey.wasPressedThisFrame) JumpLevel(levels.Count);
             }
-            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-            {
-                // 뒤로 가기(13.3): 팝업이 있으면 닫고, 스킬 미리보기면 취소, 인게임 대기·마지막 기회면 일시정지를 엽니다.
-                if (picker.activeSelf) picker.SetActive(false);
-                else if (modal.activeSelf) modal.SetActive(false);
-                else if (characters.gameObject.activeSelf) ShowMap();
-                else if (PreviewSlot >= 0) CancelSkill();
-                else if (gameScreen.activeSelf) Pause();
-            }
+            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) Back();
             if (!CanInput || selection.HasValue) return;
             hintTime += Time.unscaledDeltaTime;
             if (!hintVisible && hintTime >= Config.timing.hintDelaySec) ShowHint();
+        }
+        // 뒤로 가기(13.3). 기기의 뒤로 가기 버튼과 키보드 Esc가 여기로 옵니다.
+        // 팝업이 있으면 닫고, 캐릭터 화면이면 맵으로, 스킬 미리보기면 취소, 인게임 대기·마지막 기회면 일시정지,
+        // 레벨 맵이면 종료 확인을 엽니다.
+        public void Back()
+        {
+            if (picker.activeSelf) picker.SetActive(false);
+            else if (modal.activeSelf) modal.SetActive(false);
+            else if (characters.gameObject.activeSelf) ShowMap();
+            else if (PreviewSlot >= 0) CancelSkill();
+            else if (gameScreen.activeSelf) Pause();
+            else if (map.gameObject.activeSelf) ConfirmQuit();
+        }
+        private void ConfirmQuit()
+        {
+            Popup("게임을 종료할까요?","","종료",Quit,"취소",() => modal.SetActive(false),null,null);
+        }
+        // 진행은 결과 팝업·튜토리얼 완료 때 이미 저장되어 있어, 여기서는 음량처럼 아직 안 쓴 변경만 마저 씁니다.
+        private void Quit()
+        {
+            if (soundDirty) { soundDirty = false; WriteProgress(); }
+            modal.SetActive(false);
+#if UNITY_EDITOR
+            // Editor에서는 앱 종료가 동작하지 않으므로 Play를 멈춥니다.
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
         public void Touch()
         {

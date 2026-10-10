@@ -19,7 +19,9 @@ namespace StardustAtelier.View
         // 화면: 레벨 맵과 인게임. 나머지는 팝업입니다(기획서 13.1).
         public GameObject gameScreen;
         // 팝업 하나를 여러 용도(진입·일시정지·확인·결과·튜토리얼·합류)로 다시 씁니다.
-        public GameObject modal, popupStarRow, popupGoalRow, popupPicture, popupPartyRow;
+        public GameObject modal, popupStarRow, popupGoalRow, popupPicture, popupPartyRow, popupGoldRow;
+        // 결과 팝업의 획득 골드(10.4).
+        public TMP_Text popupGoldText;
         public RectTransform popupCard;
         public UnityEngine.UI.Image popupPictureImage;
         public UnityEngine.UI.Image[] popupStars, popupGoalImages, popupRecommended;
@@ -184,6 +186,9 @@ namespace StardustAtelier.View
         public int BestStars(int index) { return bestStars[index]; }
         public bool Playable(int index) { return index >= 0 && index < levels.Count; }
         public IList<int> Owned { get { return owned; } }
+        public int Gold { get { return save != null ? save.gold : 0; } }
+        // 방금 끝난 판에서 얻은 골드. 결과 팝업에 보여줍니다.
+        public int LastGold { get; private set; }
 
         // 씬 생성기가 Editor에서 첫 화면을 미리 그릴 때만 씁니다.
         public void Preview()
@@ -460,6 +465,9 @@ namespace StardustAtelier.View
                 yield return new WaitForSecondsRealtime(Config.timing.clearBannerSec);
                 clearBanner.SetActive(false);
                 bool firstClear = bestStars[current] == 0;
+                // 골드 보상(10.4)은 최고 별을 갱신하기 전의 값으로 계산합니다.
+                LastGold = ProgressService.ClearGold(Config.rewards,Session.Stars,bestStars[current]);
+                save.gold += LastGold;
                 bestStars[current] = Math.Max(bestStars[current],Session.Stars);
                 unlocked = Math.Max(unlocked,Math.Min(current+1,levels.Count-1));
                 if (Session.Level.tutorial != null) tutorialsSeen.Add(Session.Level.id);
@@ -634,7 +642,9 @@ namespace StardustAtelier.View
                     Popup("클리어!",body,"다음 레벨",AfterJoin(() => OpenEntry(next)),"다시 하기",AfterJoin(() => OpenEntry(current)),"맵으로",AfterJoin(ShowMap));
                 else
                     Popup("클리어!",body,"맵으로",AfterJoin(ShowMap),"다시 하기",AfterJoin(() => OpenEntry(current)),null,null);
-                popupStarRow.SetActive(true); LayoutPopup();
+                popupStarRow.SetActive(true);
+                popupGoldText.text = "+"+LastGold; popupGoldRow.SetActive(true);
+                LayoutPopup();
                 StartCoroutine(RevealStars(Session.Stars));
             }
             else
@@ -704,7 +714,7 @@ namespace StardustAtelier.View
             popupTitle.text = title; popupBody.text = body;
             popupBody.gameObject.SetActive(!string.IsNullOrEmpty(body));
             popupStarRow.SetActive(false); popupGoalRow.SetActive(false); popupPicture.SetActive(false);
-            popupPartyRow.SetActive(false); picker.SetActive(false);
+            popupPartyRow.SetActive(false); popupGoldRow.SetActive(false); picker.SetActive(false);
             ConfigureButton(primary,primaryText,first,firstAction);
             ConfigureButton(secondary,secondaryText,second,secondAction);
             ConfigureButton(tertiary,tertiaryText,third,thirdAction);
@@ -716,11 +726,11 @@ namespace StardustAtelier.View
         {
             bool row = popupStarRow.activeSelf || popupGoalRow.activeSelf || popupPicture.activeSelf;
             bool body = popupBody.gameObject.activeSelf;
-            bool party = popupPartyRow.activeSelf;
+            bool party = popupPartyRow.activeSelf, goldRow = popupGoldRow.activeSelf;
             UnityEngine.UI.Button[] buttons = { primary, secondary, tertiary };
             int count = 0;
             foreach (UnityEngine.UI.Button button in buttons) if (button.gameObject.activeSelf) count++;
-            float height = 120+(row ? 250 : 0)+(body ? 120 : 0)+(party ? 300 : 0)+20+count*130+50;
+            float height = 120+(row ? 250 : 0)+(body ? 120 : 0)+(party ? 300 : 0)+(goldRow ? 90 : 0)+20+count*130+50;
             popupCard.sizeDelta = new Vector2(popupCard.sizeDelta.x,height);
             float y = height*0.5f;
             ((RectTransform)popupTitle.transform.parent).anchoredPosition = new Vector2(0,y);
@@ -732,6 +742,7 @@ namespace StardustAtelier.View
                 y -= 250;
             }
             if (body) { ((RectTransform)popupBody.transform).anchoredPosition = new Vector2(0,y-55); y -= 120; }
+            if (goldRow) { ((RectTransform)popupGoldRow.transform).anchoredPosition = new Vector2(0,y-40); y -= 90; }
             if (party) { ((RectTransform)popupPartyRow.transform).anchoredPosition = new Vector2(0,y-150); y -= 300; }
             y -= 20;
             foreach (UnityEngine.UI.Button button in buttons)

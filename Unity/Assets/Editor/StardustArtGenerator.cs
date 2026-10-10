@@ -40,6 +40,7 @@ public static class StardustArtGenerator
         Make("ui_circle",128,p => p.Fill((x,y) => Sdf.Circle(x,y,0.96f),Color.white));
         Make("ui_ring",128,p => p.Fill((x,y) => Mathf.Abs(Sdf.Circle(x,y,0.88f))-0.08f,Color.white));
         Make("ui_glow",128,UiGlow);
+        Make("ui_gold",128,UiGold);
         MakeSized("bg_game",720,1280,p => Background(p,11,new Color(0.09f,0.06f,0.20f),new Color(0.26f,0.14f,0.38f)));
         MakeSized("bg_map",720,1280,p => Background(p,23,new Color(0.07f,0.08f,0.22f),new Color(0.30f,0.16f,0.40f)));
         AssetDatabase.Refresh();
@@ -267,6 +268,21 @@ public static class StardustArtGenerator
         p.Fill((x,y) => Sdf.Circle(x,y,0.92f),new Color(0.10f,0.40f,0.20f));
         p.Shade((x,y) => Sdf.Circle(x,y,0.84f),(x,y,d) => Color.Lerp(new Color(0.20f,0.66f,0.36f),new Color(0.40f,0.88f,0.52f),Mathf.Clamp01((y+1)*0.5f)));
         p.Fill((x,y) => Mathf.Min(Sdf.Segment(x,y,-0.42f,0.02f,-0.12f,-0.30f,0.11f),Sdf.Segment(x,y,-0.12f,-0.30f,0.46f,0.36f,0.11f)),Color.white);
+    }
+    // 골드(동전) 아이콘: 금색 원 + 안쪽 테두리 + 가운데 마름모. 최종 그림으로 바꿀 자리입니다.
+    private static void UiGold(Paint p)
+    {
+        Color coin = new Color(1f,0.78f,0.25f);
+        Func<float,float,float> shape = (x,y) => Sdf.Circle(x,y,0.86f);
+        p.Fill((x,y) => shape(x,y)-0.07f,new Color(0.42f,0.24f,0.04f));
+        p.Shade(shape,(x,y,d) =>
+        {
+            Color body = Color.Lerp(Mul(coin,0.72f),Lift(coin,0.30f),Mathf.Clamp01((y+1)*0.5f));
+            if (Mathf.Abs(Sdf.Circle(x,y,0.66f)) < 0.045f) body = Mul(coin,0.58f);
+            if (Sdf.Diamond(x,y,0.38f) < 0) body = Color.Lerp(Lift(coin,0.55f),Mul(coin,0.9f),Mathf.Clamp01(0.5f-y));
+            float h = 1-((x+0.30f)*(x+0.30f)/(0.22f*0.22f)+(y-0.46f)*(y-0.46f)/(0.09f*0.09f));
+            return h > 0 ? Color.Lerp(body,Color.white,0.7f*h) : body;
+        });
     }
     private static void UiGlow(Paint p)
     {

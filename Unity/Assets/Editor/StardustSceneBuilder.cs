@@ -14,7 +14,7 @@ public static class StardustSceneBuilder
 {
     private static TMP_FontAsset font;
     private static Material outlined;
-    private static Sprite rounded, circle, ring, glow, star, lockSprite, pause, check, bgGame, bgMap;
+    private static Sprite rounded, circle, ring, glow, star, lockSprite, pause, check, bgGame, bgMap, goldIcon;
     // 색: 밤하늘 남보라 바탕 + 금빛 강조.
     private static readonly Color ink = new Color(0.10f,0.06f,0.16f);
     private static readonly Color panel = new Color(0.17f,0.13f,0.32f,0.94f);
@@ -234,6 +234,10 @@ public static class StardustSceneBuilder
         RectTransform header = Panel("Header",screen,0,862,1120,200,new Color(0.10f,0.07f,0.22f,0.92f),gold);
         Text("Eyebrow",header,0,52,900,40,"S T A R D U S T   A T E L I E R",24,gold,false);
         Text("Title",header,0,-12,900,100,"별가루 아틀리에",70,Color.white,true);
+        // 보유 골드(13.2): 제목 오른쪽 위의 알약 모양 칸.
+        RectTransform goldPill = Panel("Gold",header,420,48,230,64,new Color(0.16f,0.12f,0.30f,1f),gold);
+        Picture(Rect("Icon",goldPill,-78,0,50,50),goldIcon,Color.white,false);
+        map.goldText = Text("Value",goldPill,22,0,150,56,"0",34,Color.white,true);
         screen.gameObject.SetActive(false);
     }
     private static Vector2 NodePosition(int index)
@@ -286,6 +290,11 @@ public static class StardustSceneBuilder
         app.popupPictureImage.preserveAspect = true;
 
         app.popupBody = Text("Body",card,0,60,800,150,"",38,Color.white,false);
+        // 결과 팝업의 획득 골드 줄(10.4): 동전 그림 + "+150".
+        RectTransform goldRow = Rect("GoldRow",card,0,0,400,80); app.popupGoldRow = goldRow.gameObject;
+        Picture(Rect("Icon",goldRow,-70,0,66,66),goldIcon,Color.white,false);
+        app.popupGoldText = Text("Value",goldRow,40,0,220,70,"+100",52,gold,true);
+        goldRow.gameObject.SetActive(false);
         // 레벨 진입 팝업의 파티 영역: 추천 속성(보석 아이콘)과 파티 슬롯(누르면 캐릭터 고르기).
         RectTransform partyRow = Rect("PartyRow",card,0,-100,800,300); app.popupPartyRow = partyRow.gameObject;
         Text("RecommendLabel",partyRow,-150,112,200,50,"추천",30,lavender,false);
@@ -455,7 +464,7 @@ public static class StardustSceneBuilder
         circle = StardustArtGenerator.Load("ui_circle"); ring = StardustArtGenerator.Load("ui_ring");
         glow = StardustArtGenerator.Load("ui_glow"); star = StardustArtGenerator.Load("ui_star");
         lockSprite = StardustArtGenerator.Load("ui_lock"); pause = StardustArtGenerator.Load("ui_pause");
-        check = StardustArtGenerator.Load("ui_check");
+        check = StardustArtGenerator.Load("ui_check"); goldIcon = StardustArtGenerator.Load("ui_gold");
         bgGame = StardustArtGenerator.Load("bg_game"); bgMap = StardustArtGenerator.Load("bg_map");
     }
 }

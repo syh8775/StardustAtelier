@@ -11,6 +11,8 @@ namespace StardustAtelier.View
     {
         public UnityEngine.UI.ScrollRect scroll;
         public MapNode[] nodes;
+        // 상단 보유 골드(13.2).
+        public TMP_Text goldText;
         private StardustApp app;
 
         public void Bind(StardustApp owner)
@@ -31,6 +33,7 @@ namespace StardustAtelier.View
                 bool current = open && i == app.Unlocked;
                 nodes[i].Show(level != null ? level.id : i+1,open,current,level != null && level.hard,app.BestStars(i));
             }
+            if (goldText != null) goldText.text = app.Gold.ToString("N0");
             ScrollTo(app.Unlocked);
         }
         // 열면 다음에 할 레벨로 스크롤합니다. 콘텐츠는 아래가 1번이므로 위치 비율을 그대로 씁니다.

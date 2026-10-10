@@ -19,6 +19,8 @@ namespace StardustAtelier.Core
         public bool SkillLocked { get; private set; }
         // 이동 0이고 목표가 남았지만 쓸 수 있는 스킬이 있을 때(10.3). 스왑은 받지 않고 스킬·[종료]만 받습니다.
         public bool LastChance { get; private set; }
+        // 이동 횟수가 남았는데 둘 수 있는 수가 없어(셔플·비상 처리까지 실패) 끝난 판인지(9.3). 결과 창 문구를 가르는 데 씁니다.
+        public bool NoMoves { get; private set; }
         private readonly GameConfig config;
         private readonly Resolver resolver;
         private readonly ulong seed;
@@ -210,9 +212,17 @@ namespace StardustAtelier.Core
                 if (!skillTurn) resolver.SpreadVine(events);
                 if (!MoveFinder.HasAction(Board,Level.features.squareMatch))
                 {
-                    bool found = Shuffler.Shuffle(Board,Level,config.rules,ref shuffle);
-                    events.Add(new GameEvent(GameEventKind.Shuffled,default(CellPosition)) { board = Board.Clone() });
-                    if (!found) Outcome = SessionOutcome.Fail;
+                    // 둘 수 있는 수가 없으면 섞기를 최대 3번(shuffleMaxTries) 보여 줍니다(2026-10-10 변경).
+                    // 섞을 때마다 수가 생겼는지 확인하고, 마지막 번에도 없으면 마지막 수단(색 다시 깔기 → 프리즘)까지 쓴 뒤 실패합니다.
+                    bool found = false;
+                    int tries = Math.Max(1,config.rules.shuffleMaxTries);
+                    for (int attempt = 1; attempt <= tries && !found; attempt++)
+                    {
+                        found = Shuffler.Permute(Board,Level,ref shuffle);
+                        if (!found && attempt == tries) found = Shuffler.LastResort(Board,Level,config.rules,ref shuffle);
+                        events.Add(new GameEvent(GameEventKind.Shuffled,default(CellPosition)) { board = Board.Clone(), value = attempt });
+                    }
+                    if (!found) { Outcome = SessionOutcome.Fail; NoMoves = true; }
                 }
             }
             events.Add(new GameEvent(GameEventKind.TurnEnded,default(CellPosition)) { value = (int)Outcome });

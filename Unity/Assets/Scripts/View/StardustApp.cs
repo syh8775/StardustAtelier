@@ -548,6 +548,7 @@ namespace StardustAtelier.View
             }
             Touch();
             // 특수 블록 클릭은 선택 여부와 관계없이 즉시 단독 발동합니다. 조합은 드래그로 교환합니다.
+            // 얼음에 갇힌 특수 블록은 옮길 수 없지만 발동은 되므로, 옮길 수 있는지보다 먼저 확인합니다.
             if (MoveFinder.CanActivate(Session.Board,p))
             {
                 selection = null; board.ClearMarks(); BeginTurn();
@@ -862,7 +863,9 @@ namespace StardustAtelier.View
             }
             else
             {
-                Popup("아쉬워요!","목표를 다 모으지 못했어요","다시 하기",() => OpenEntry(current),"맵으로",ShowMap,null,null);
+                // 이동 횟수가 남았는데 끝난 판은 이유를 따로 알려 줍니다(9.3).
+                string reason = Session.NoMoves ? "더 이동할 수 있는 블록이 없어요" : "목표를 다 모으지 못했어요";
+                Popup("아쉬워요!",reason,"다시 하기",() => OpenEntry(current),"맵으로",ShowMap,null,null);
                 int[] remaining = new int[Session.Goals.Count];
                 for (int i = 0; i < remaining.Length; i++) remaining[i] = Session.Goals.Remaining(i);
                 ShowGoals(Session.Level,remaining);

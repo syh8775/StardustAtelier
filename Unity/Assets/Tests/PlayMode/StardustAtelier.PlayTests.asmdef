@@ -1,1 +1,1 @@
-{"name":"StardustAtelier.PlayTests","references":["StardustAtelier.Core","StardustAtelier.View","UnityEngine.UI","Unity.TextMeshPro"],"optionalUnityReferences":["TestAssemblies"]}
+{"name":"StardustAtelier.PlayTests","references":["StardustAtelier.Core","StardustAtelier.Meta","StardustAtelier.View","UnityEngine.UI","Unity.TextMeshPro"],"optionalUnityReferences":["TestAssemblies"]}

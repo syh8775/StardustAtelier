@@ -15,13 +15,38 @@ namespace StardustAtelier.PlayTests
     {
         private StardustApp app;
         // [실제 코드에 남길 주석] 실제 씬의 레이캐스트와 포인터 이벤트를 거쳐 입력부터 표시까지 검사합니다.
+        private string saveDirectory;
         [UnitySetUp] public IEnumerator SetUp()
         {
+            // 실제 저장을 건드리지 않도록 테스트마다 빈 임시 폴더를 저장 폴더로 씁니다.
+            saveDirectory = System.IO.Path.Combine(System.IO.Path.GetTempPath(),"stardust-play-test-"+Guid.NewGuid().ToString("N"));
+            System.IO.Directory.CreateDirectory(saveDirectory);
+            StardustApp.SaveDirectoryOverride = saveDirectory;
             SceneManager.LoadScene("Stardust");
             yield return null;
             app = UnityEngine.Object.FindFirstObjectByType<StardustApp>();
             app.StartLevel(0,63); app.SkipIntro();
             yield return Ready();
+        }
+        [TearDown] public void TearDown()
+        {
+            StardustApp.SaveDirectoryOverride = null;
+            if (System.IO.Directory.Exists(saveDirectory)) System.IO.Directory.Delete(saveDirectory,true);
+        }
+        // 저장 파일에 적힌 진행(클리어·별·보유 캐릭터)이 앱을 다시 켜면 그대로 돌아옵니다(14.3).
+        [UnityTest] public IEnumerator SavedProgressIsRestoredOnStart()
+        {
+            StardustAtelier.Meta.SaveData data = new StardustAtelier.Meta.SaveData();
+            StardustAtelier.Meta.LevelSave level = StardustAtelier.Meta.SaveService.Level(data,1); level.cleared = true; level.bestStars = 2;
+            data.characters["105"] = new StardustAtelier.Meta.CharacterSave();
+            data.itemsSeen.Add("Rocket");
+            StardustAtelier.Meta.SaveService.Save(saveDirectory,data);
+            SceneManager.LoadScene("Stardust");
+            yield return null; yield return null;
+            app = UnityEngine.Object.FindFirstObjectByType<StardustApp>();
+            Assert.That(app.Unlocked,Is.EqualTo(1)); Assert.That(app.BestStars(0),Is.EqualTo(2));
+            Assert.That(app.Owned,Does.Contain(105)); Assert.That(app.SaveRecovered,Is.False);
+            Assert.That(app.map.nodes[1].button.interactable,Is.True);
         }
         private IEnumerator Ready()
         {
@@ -263,6 +288,12 @@ namespace StardustAtelier.PlayTests
             Assert.That(app.Session.Outcome,Is.EqualTo(SessionOutcome.Clear));
             Assert.That(app.modal.activeSelf,Is.True); Assert.That(app.popupTitle.text,Is.EqualTo("클리어!"));
             Assert.That(app.primaryText.text,Is.EqualTo("다음 레벨"));
+            // 결과 팝업을 띄울 때 진행이 저장됩니다: 레벨 1 클리어, 세이지 보유, 시도 1회(14.3).
+            bool recovered;
+            StardustAtelier.Meta.SaveData saved = StardustAtelier.Meta.SaveService.Load(saveDirectory,out recovered);
+            Assert.That(recovered,Is.False); Assert.That(saved.levels["1"].cleared,Is.True);
+            Assert.That(saved.levels["1"].bestStars,Is.EqualTo(app.Session.Stars)); Assert.That(saved.levels["1"].attempts,Is.EqualTo(1));
+            Assert.That(saved.characters.ContainsKey("105"),Is.True);
             // 다음 레벨은 레벨 진입 팝업을 거쳐 [시작]으로 들어갑니다(13.1).
             Click(app.primary); yield return null;
             // 레벨 1 첫 클리어로 세이지가 합류하면 합류 팝업을 먼저 닫습니다(13.1).

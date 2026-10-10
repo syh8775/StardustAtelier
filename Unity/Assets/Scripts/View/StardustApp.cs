@@ -664,7 +664,10 @@ namespace StardustAtelier.View
             if (!Playable(index) || index > unlocked) return;
             LevelData level = levels[index];
             entryParty = DefaultParty(level); entryIndex = index;
-            Popup("레벨 "+level.id,"이동 "+level.moves,
+            // 별 기준(10.4): 클리어하면 별 1개, 이동을 일정 수 이상 남기면 2개·3개입니다.
+            string stars = "별 2개 · 이동 "+GameSession.StarMoves(level.moves,Config.rules.star2MovesRatio)+" 이상 남기기\n"+
+                "별 3개 · 이동 "+GameSession.StarMoves(level.moves,Config.rules.star3MovesRatio)+" 이상 남기기";
+            Popup("레벨 "+level.id,"이동 "+level.moves+"\n"+stars,
                 "시작",() => StartLevel(index,null,(int[])entryParty.Clone()),"닫기",() => modal.SetActive(false),null,null);
             ShowGoals(level,null);
             // 슬롯 0칸인 레벨은 파티·추천 속성 영역을 숨깁니다.

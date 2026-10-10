@@ -67,6 +67,23 @@ namespace StardustAtelier.Tests
             Assert.That(ProgressService.ClearGold(rewards,1,3),Is.EqualTo(20));
             Assert.That(ProgressService.ClearGold(rewards,0,0),Is.Zero);  // 실패는 보상 없음
         }
+        // 캐릭터 성장(12.6): 비용 30 × 현재 레벨, 최대 Lv 21, 골드가 모자라면 올리지 못합니다.
+        [Test] public void LevelUpSpendsGoldAndStopsAtMaxLevelOrWhenGoldIsShort()
+        {
+            GrowthData growth = DataLoader.LoadCharacters(Data).growth;
+            Assert.That(CharacterService.LevelUpCost(growth,1),Is.EqualTo(30));
+            Assert.That(CharacterService.LevelUpCost(growth,20),Is.EqualTo(600));
+            SaveData data = new SaveData { gold = 100 };
+            data.characters["105"] = new CharacterSave();
+            Assert.That(CharacterService.TryLevelUp(data,growth,105),Is.True);   // 1 → 2, 30 골드
+            Assert.That(CharacterService.TryLevelUp(data,growth,105),Is.True);   // 2 → 3, 60 골드
+            Assert.That(data.characters["105"].level,Is.EqualTo(3)); Assert.That(data.gold,Is.EqualTo(10));
+            Assert.That(CharacterService.TryLevelUp(data,growth,105),Is.False);  // 90 골드가 필요한데 10뿐
+            Assert.That(data.characters["105"].level,Is.EqualTo(3)); Assert.That(data.gold,Is.EqualTo(10));
+            Assert.That(CharacterService.TryLevelUp(data,growth,109),Is.False);  // 보유하지 않은 캐릭터
+            data.gold = 100000; data.characters["105"].level = growth.maxLevel;
+            Assert.That(CharacterService.CanLevelUp(data,growth,105),Is.False);  // 최대 레벨
+        }
         [Test] public void NormalizeClampsValuesAndRestoresGrantedCharacters()
         {
             LevelCatalog levels = DataLoader.LoadLevels(Data); CharacterCatalog characters = DataLoader.LoadCharacters(Data);

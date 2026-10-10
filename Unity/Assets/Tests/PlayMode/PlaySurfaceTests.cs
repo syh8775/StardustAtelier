@@ -48,6 +48,44 @@ namespace StardustAtelier.PlayTests
             Assert.That(app.Owned,Does.Contain(105)); Assert.That(app.SaveRecovered,Is.False);
             Assert.That(app.map.nodes[1].button.interactable,Is.True);
         }
+        // 맵 [캐릭터] → 캐릭터 화면 → [레벨업]: 골드 차감·레벨 상승·즉시 저장, 골드가 모자라면 버튼이 꺼집니다(12.6).
+        [UnityTest] public IEnumerator CharacterScreenLevelUpSpendsGoldAndSaves()
+        {
+            StardustAtelier.Meta.SaveData data = new StardustAtelier.Meta.SaveData { gold = 100 };
+            StardustAtelier.Meta.SaveService.Level(data,1).cleared = true;
+            data.characters["105"] = new StardustAtelier.Meta.CharacterSave();
+            StardustAtelier.Meta.SaveService.Save(saveDirectory,data);
+            SceneManager.LoadScene("Stardust");
+            yield return null; yield return null;
+            app = UnityEngine.Object.FindFirstObjectByType<StardustApp>();
+            Click(app.map.charactersButton); yield return null;
+            Assert.That(app.characters.gameObject.activeSelf,Is.True); Assert.That(app.map.gameObject.activeSelf,Is.False);
+            Assert.That(app.characters.SelectedId,Is.EqualTo(105)); Assert.That(app.characters.levelText.text,Is.EqualTo("Lv 1"));
+            Click(app.characters.levelUp); yield return null;   // 1 → 2, 30 골드
+            Click(app.characters.levelUp); yield return null;   // 2 → 3, 60 골드
+            Assert.That(app.CharacterLevel(105),Is.EqualTo(3)); Assert.That(app.Gold,Is.EqualTo(10));
+            Assert.That(app.characters.levelText.text,Is.EqualTo("Lv 3")); Assert.That(app.characters.levelUp.interactable,Is.False);
+            bool recovered;
+            StardustAtelier.Meta.SaveData saved = StardustAtelier.Meta.SaveService.Load(saveDirectory,out recovered);
+            Assert.That(saved.characters["105"].level,Is.EqualTo(3)); Assert.That(saved.gold,Is.EqualTo(10));
+            Click(app.characters.back); yield return null;
+            Assert.That(app.map.gameObject.activeSelf,Is.True); Assert.That(app.map.goldText.text,Is.EqualTo("10"));
+        }
+        // 맵 [설정] → 배경음 끄기: 바꾸면 즉시 저장합니다(13.2).
+        [UnityTest] public IEnumerator SettingsToggleSavesImmediately()
+        {
+            app.ShowMap(); yield return null;
+            Click(app.map.settingsButton); yield return null;
+            Assert.That(app.modal.activeSelf,Is.True); Assert.That(app.popupTitle.text,Is.EqualTo("설정"));
+            Assert.That(app.BgmOn,Is.True);
+            Click(app.soundBgm); yield return null;
+            Assert.That(app.BgmOn,Is.False); Assert.That(app.soundBgmText.text,Is.EqualTo("배경음 꺼짐"));
+            bool recovered;
+            StardustAtelier.Meta.SaveData saved = StardustAtelier.Meta.SaveService.Load(saveDirectory,out recovered);
+            Assert.That(saved.settings.bgm,Is.False); Assert.That(saved.settings.sfx,Is.True);
+            Click(app.primary); yield return null;
+            Assert.That(app.modal.activeSelf,Is.False);
+        }
         private IEnumerator Ready()
         {
             float deadline = Time.realtimeSinceStartup+12;

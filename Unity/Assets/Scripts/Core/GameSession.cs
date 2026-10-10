@@ -24,6 +24,8 @@ namespace StardustAtelier.Core
         private readonly ulong seed;
         private Pcg32 refill, shuffle;
         private readonly bool assist;
+        // 실패 보정(10.5)이 켜진 판인지. 플레이어에게는 표시하지 않습니다.
+        public bool Assisted { get { return assist; } }
         // 스킬 턴 안에서는 충전이 절반이고, 발동한 캐릭터 자신은 충전하지 않습니다.
         private int skillSlot = -1;
 

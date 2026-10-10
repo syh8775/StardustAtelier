@@ -277,7 +277,10 @@ namespace StardustAtelier.View
             Load(); StopAllCoroutines(); current = index;
             LevelData level = levels[index];
             int[] ids = party != null && party.Length == level.partySlots ? party : DefaultParty(level);
-            Session = new GameSession(level,Config,seed ?? unchecked((ulong)DateTime.UtcNow.Ticks),BuildParty(ids));
+            // 실패 보정(10.5): 이 레벨을 연속 3회(assistFailThreshold) 이상 실패했고 고비 레벨이 아니면 그 판 내내 켭니다.
+            bool assisted = !level.hard && save != null &&
+                SaveService.Level(save,level.id).consecutiveFails >= Config.rules.assistFailThreshold;
+            Session = new GameSession(level,Config,seed ?? unchecked((ulong)DateTime.UtcNow.Ticks),BuildParty(ids),assisted);
             lastParty = (int[])ids.Clone();
             selection = null; LastEvents = new List<GameEvent>(); PreviewSlot = -1;
             modal.SetActive(false); picker.SetActive(false); clearBanner.SetActive(false);

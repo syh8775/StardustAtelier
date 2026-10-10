@@ -1,0 +1,52 @@
+{
+ "version": 1,
+ "input": {
+  "dragThresholdCellRatio": 0.35,
+  "shakeSec": 0.15
+ },
+ "timing": {
+  "introBannerSec": 1.2,
+  "swapSec": 0.15,
+  "swapBackSec": 0.15,
+  "clearSec": 0.2,
+  "rocketSec": 0.25,
+  "staggerPerDistanceSec": 0.03,
+  "bombSec": 0.25,
+  "meteorFlightSec": 0.4,
+  "prismSec": 0.5,
+  "comboIntroSec": 0.4,
+  "fallPerCellSec": 0.06,
+  "fallMinSec": 0.12,
+  "landBounceSec": 0.05,
+  "stepGapSec": 0.05,
+  "shuffleSec": 0.6,
+  "vineSpreadSec": 0.3,
+  "hintDelaySec": 5.0,
+  "clearBannerSec": 0.8,
+  "starIntervalSec": 0.3,
+  "toastSec": 1.5
+ },
+ "rules": {
+  "maxStepsPerResolution": 50,
+  "generateMaxTries": 100,
+  "shuffleMaxTries": 3,
+  "regenerateMaxTries": 100,
+  "assistRefillRate": 0.25,
+  "assistFailThreshold": 3,
+  "star2MovesRatio": 0.2,
+  "star3MovesRatio": 0.4,
+  "gaugeUnitsPerBlock": 12
+ },
+ "rewards": {
+  "firstClearBase": 100,
+  "firstClearPerExtraStar": 50,
+  "replayBase": 20,
+  "replayPerNewStar": 50
+ },
+ "layout": {
+  "referenceWidth": 1080,
+  "referenceHeight": 1920,
+  "boardAreaPx": 1000,
+  "lowMovesWarning": 5
+ }
+}

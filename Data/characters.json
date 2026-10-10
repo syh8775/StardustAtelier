@@ -1,0 +1,94 @@
+{
+ "version": 1,
+ "characters": [
+  {
+   "id": 105,
+   "name": "세이지",
+   "attr": "G",
+   "grade": 3,
+   "skillId": 2051,
+   "baseCost": 15,
+   "unlockLevel": 2
+  },
+  {
+   "id": 106,
+   "name": "루미",
+   "attr": "B",
+   "grade": 3,
+   "skillId": 2061,
+   "baseCost": 14,
+   "unlockLevel": 4
+  },
+  {
+   "id": 107,
+   "name": "피오",
+   "attr": "R",
+   "grade": 3,
+   "skillId": 2071,
+   "baseCost": 14,
+   "unlockLevel": 6
+  },
+  {
+   "id": 108,
+   "name": "솔",
+   "attr": "Y",
+   "grade": 3,
+   "skillId": 2081,
+   "baseCost": 15,
+   "unlockLevel": 10
+  },
+  {
+   "id": 109,
+   "name": "모르",
+   "attr": "P",
+   "grade": 3,
+   "skillId": 2091,
+   "baseCost": 18,
+   "unlockLevel": 15
+  }
+ ],
+ "skills": [
+  {
+   "id": 2051,
+   "name": "숲의 가지치기",
+   "type": "HitObstaclesThenBlocks",
+   "count": 6,
+   "desc": "얼음·상자·덩굴·사슬을 먼저 골라 6칸을 부숴요"
+  },
+  {
+   "id": 2061,
+   "name": "물길",
+   "type": "HitBottomRow",
+   "count": 0,
+   "desc": "맨 아래 줄을 한 번에 부숴요"
+  },
+  {
+   "id": 2071,
+   "name": "불꽃 담기",
+   "type": "ConvertToSpecial",
+   "special": "Bomb",
+   "count": 1,
+   "desc": "블록 1개를 폭탄으로 바꿔요"
+  },
+  {
+   "id": 2081,
+   "name": "별빛 부르기",
+   "type": "ConvertToSpecial",
+   "special": "Meteor",
+   "count": 2,
+   "desc": "블록 2개를 별똥별로 바꿔요"
+  },
+  {
+   "id": 2091,
+   "name": "밤의 유예",
+   "type": "AddMoves",
+   "count": 1,
+   "desc": "남은 이동을 1 늘려요"
+  }
+ ],
+ "growth": {
+  "maxLevel": 21,
+  "costReductionPerLevel": 0.015,
+  "goldCostPerLevel": 30
+ }
+}

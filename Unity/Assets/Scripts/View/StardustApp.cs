@@ -547,14 +547,14 @@ namespace StardustAtelier.View
                 return;
             }
             Touch();
-            if (!Session.Board.Contains(p) || !Session.Board[p].CanSwap)
-            { selection = null; board.ClearMarks(); return; }
             // 특수 블록 클릭은 선택 여부와 관계없이 즉시 단독 발동합니다. 조합은 드래그로 교환합니다.
             if (MoveFinder.CanActivate(Session.Board,p))
             {
                 selection = null; board.ClearMarks(); BeginTurn();
                 StartCoroutine(ActivateTurn(p)); return;
             }
+            if (!Session.Board.Contains(p) || !Session.Board[p].CanSwap)
+            { selection = null; board.ClearMarks(); return; }
             if (selection.HasValue)
             {
                 CellPosition a = selection.Value;

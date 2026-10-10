@@ -8,7 +8,8 @@ namespace StardustAtelier.Core
         public static bool Shuffle(Board board, LevelData level, RuleConfig rules, ref Pcg32 random)
         {
             List<CellPosition> cells = new List<CellPosition>();
-            foreach (CellPosition p in board.Positions()) if (board[p].CanSwap) cells.Add(p);
+            // 유물은 옮길 수 있지만 셔플 대상은 아닙니다(9.3).
+            foreach (CellPosition p in board.Positions()) if (board[p].CanSwap && board[p].occupant.kind != OccupantKind.Relic) cells.Add(p);
             for (int attempt = 0; attempt < rules.shuffleMaxTries; attempt++)
             {
                 for (int i = cells.Count-1; i > 0; i--) board.Swap(cells[i],cells[random.NextInt(i+1)]);

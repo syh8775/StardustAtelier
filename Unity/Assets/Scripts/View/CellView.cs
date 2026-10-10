@@ -10,6 +10,8 @@ namespace StardustAtelier.View
         // floor: 칸 바닥(체크무늬), ice: 바닥층 얼음, gem: 점유물 그림, overlay: 특수 블록 표시,
         // chain: 덮개 사슬, highlight: 선택·힌트 빛.
         public UnityEngine.UI.Image floor, ice, gem, overlay, chain, highlight;
+        // frost: 얼음 칸의 블록 위에 덮는 반투명 얼음. 블록이 얼음 속에 갇힌 것처럼 보이게 합니다.
+        public UnityEngine.UI.Image frost;
         public InputController input;
         public CellArt art;
         public CellPosition Position { get; set; }
@@ -18,6 +20,7 @@ namespace StardustAtelier.View
         private static readonly Color floorA = new Color(0.20f,0.17f,0.36f,0.92f);
         private static readonly Color floorB = new Color(0.25f,0.21f,0.43f,0.92f);
 
+        private float frostAlpha = 0.4f;
         public void Render(Cell cell)
         {
             gameObject.SetActive(cell.exists);
@@ -36,6 +39,12 @@ namespace StardustAtelier.View
                 gem.sprite = SpriteFor(cell.occupant);
                 // 아이템은 보석 없이 아이템 그림만 그립니다. 겹침 표시는 쓰지 않습니다.
                 overlay.gameObject.SetActive(false);
+            }
+            if (frost != null)
+            {
+                // 바닥 얼음만으로는 블록 뒤의 흰 배경처럼 보여서, 같은 얼음 그림을 블록 위에도 옅게 덮습니다(2겹이 더 짙음).
+                frost.gameObject.SetActive(cell.ice > 0 && occupied);
+                if (cell.ice > 0) { frost.sprite = cell.ice == 2 ? art.ice2 : art.ice1; frostAlpha = cell.ice == 2 ? 0.58f : 0.40f; frost.color = new Color(1,1,1,frostAlpha); }
             }
             chain.gameObject.SetActive(cell.chained);
             tile.anchoredPosition = Vector2.zero;
@@ -62,6 +71,7 @@ namespace StardustAtelier.View
         {
             Color shade = dim ? new Color(0.35f,0.35f,0.42f,1) : Color.white;
             gem.color = shade; ice.color = shade; chain.color = shade;
+            if (frost != null) frost.color = new Color(shade.r,shade.g,shade.b,frostAlpha);
         }
         public void Mark(bool visible, Color color)
         { highlight.enabled = visible; highlight.color = color; }

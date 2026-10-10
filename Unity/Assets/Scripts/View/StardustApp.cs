@@ -49,6 +49,8 @@ namespace StardustAtelier.View
         public UnityEngine.UI.Button pickerClear, pickerClose;
         // 목표 안내 배너(7.3, 1.2초, 탭으로 건너뛰기)와 클리어 배너(0.8초).
         public GameObject introBanner, clearBanner;
+        // 안내형 튜토리얼의 손가락 표시(13.3).
+        public TutorialGuide guide;
         public UnityEngine.UI.Button introSkip;
         public TMP_Text introTitle, introMoves;
         public UnityEngine.UI.Image[] introGoalImages;
@@ -96,9 +98,9 @@ namespace StardustAtelier.View
             { "tut_match", "같은 색 3개를 줄지어 보세요" },
             { "tut_rocket", "4개를 맞추면 로켓이 생겨요" },
             { "tut_skill", "블록을 모으면 캐릭터 게이지가 차요.\n가득 찬 캐릭터를 눌러 스킬을 쓰세요" },
-            { "tut_ice", "얼음 위의 블록을 없애면 얼음이 깨져요" },
+            { "tut_ice", "얼음에 갇힌 블록은 움직일 수 없어요.\n매치에 포함하면 얼음이 깨져요" },
             { "tut_box", "상자는 옆에서 매치해 깨요.\n상자가 있으면 위에서 블록이 내려오지 않아요" },
-            { "tut_relic", "유물을 맨 아래까지 내리면 수집해요" },
+            { "tut_relic", "유물을 맨 아래까지 내리면 수집해요.\n블록과 자리를 바꿔 옮길 수도 있어요" },
             { "tut_square", "이제 2×2로도 맞출 수 있어요.\n별똥별이 목표를 찾아가요" },
             { "tut_vine", "덩굴은 옆에서 매치해 없애요.\n한 턴 동안 건드리지 않으면 번져요" },
             { "tut_chain", "사슬에 묶인 블록은 움직일 수 없어요.\n매치에 포함하면 풀려요" },
@@ -112,7 +114,8 @@ namespace StardustAtelier.View
             Load(); LoadProgress();
             hud.pause.onClick.AddListener(Pause);
             hud.skillUse.onClick.AddListener(UseSkillNow);
-            hud.skillCancel.onClick.AddListener(CancelSkill);
+            // 스킬 안내 중에는 [취소]를 받지 않습니다(지정 입력은 [발동]).
+            hud.skillCancel.onClick.AddListener(() => { if (!GuideActive) CancelSkill(); });
             hud.endButton.onClick.AddListener(EndLastChance);
             hud.party.Bind(this); characters.Bind(this);
             bgmSlider.onValueChanged.AddListener(value => SetVolume(true,(int)value));
@@ -239,8 +242,37 @@ namespace StardustAtelier.View
         // 설정 팝업: 배경음·효과음 켜기/끄기와 버전 표시.
         public void OpenSettings()
         {
-            Popup("설정","버전 "+Application.version,"닫기",() => modal.SetActive(false),null,null,null,null);
+            // 개발용 도구(DevTools)가 켜져 있으면 [진행 초기화] 버튼을 함께 보여줍니다.
+            Popup("설정","버전 "+Application.version,"닫기",() => modal.SetActive(false),
+                DevTools ? "진행 초기화 (테스트)" : null,ConfirmReset,null,null);
             popupSoundRow.SetActive(true); RefreshSound(); LayoutPopup();
+        }
+
+        // ---- 테스트용 도구(기획서의 디버그 메뉴 중 일부) ----
+        // Editor와 개발 빌드에서만 켜집니다. 출시 빌드에는 버튼도 키도 나오지 않습니다.
+        public static bool DevTools { get { return Application.isEditor || Debug.isDebugBuild; } }
+        private void ConfirmReset()
+        {
+            Popup("진행을 초기화할까요?","레벨·캐릭터·골드·튜토리얼 기록이\n모두 처음 상태로 돌아가요","초기화",ResetProgress,"취소",() => modal.SetActive(false),null,null);
+        }
+        // 저장을 새 것으로 덮어쓰고 처음 실행한 상태로 맵을 엽니다.
+        public void ResetProgress()
+        {
+            if (!DevTools) return;
+            SaveService.Save(SaveDirectory,new SaveData());
+            LoadProgress(); pendingJoin = 0; current = 0; soundDirty = false;
+            ApplyVolume(); ShowMap();
+        }
+        // 레벨 바로 가기: 잠금과 관계없이 지금 레벨에서 step만큼 떨어진 레벨의 진입 팝업을 엽니다.
+        // 잠금 해제는 이번 실행 동안만 유지하고 저장하지 않습니다.
+        public void JumpLevel(int step)
+        {
+            if (!DevTools || titleScreen.activeSelf) return;
+            int index = Mathf.Clamp(current+step,0,levels.Count-1);
+            StopAllCoroutines(); Busy = false; Intro = false; PreviewSlot = -1;
+            if (guide != null) guide.Hide();
+            current = index; unlocked = Math.Max(unlocked,index);
+            ShowMap(); OpenEntry(index);
         }
         // 슬라이더를 움직이면 소리에 바로 반영하고, 손을 뗀 뒤 한 번 저장합니다(끄는 동안 매 프레임 쓰지 않도록).
         public void SetVolume(bool bgm, int value)
@@ -289,6 +321,7 @@ namespace StardustAtelier.View
             hud.Configure(Session.Level,Config); hud.party.Configure(Session,art); hud.party.Highlight(-1);
             board.Configure(Session.Board,Config.layout.boardAreaPx);
             Busy = true; Intro = true; skipIntro = false; hintTime = 0; hintVisible = false; hud.Busy(true);
+            if (guide != null) guide.Hide();
             StartCoroutine(BeginLevel());
         }
         private PartyMember[] BuildParty(int[] ids)
@@ -355,9 +388,8 @@ namespace StardustAtelier.View
             while (elapsed < Config.timing.introBannerSec && !skipIntro) { elapsed += Time.unscaledDeltaTime; yield return null; }
             introBanner.SetActive(false);
             Intro = false; Busy = false; hud.Busy(false); hud.party.Refresh();
-            if (IsGuidedTurn()) { hud.ShowTip(TutorialText(tutorial)); ShowHint(); }
-            // 레벨 8 안내형 스킬 튜토리얼: 가득 찬 세이지 초상화를 눌러 보게 합니다.
-            if (IsGuidedSkill()) hud.ShowTip(TutorialText(tutorial));
+            // 안내형 튜토리얼(13.3): 말풍선과 손가락으로 지정 입력을 알려 주고, 그 입력만 받습니다.
+            if (GuideActive) { hud.ShowTip(TutorialText(tutorial)); ShowGuide(); }
         }
         private Sprite TutorialPicture(string key)
         {
@@ -396,12 +428,73 @@ namespace StardustAtelier.View
         private bool IsGuidedTurn()
         {
             TutorialData tutorial = Session.Level.tutorial;
-            return Session.Turns == 0 && tutorial != null && tutorial.type == "Guided";
+            return Session.Turns == 0 && tutorial != null && tutorial.type == "Guided" && tutorial.swap != null &&
+                !tutorialsSeen.Contains(Session.Level.id);
         }
         private bool IsGuidedSkill()
         {
             TutorialData tutorial = Session.Level.tutorial;
             return tutorial != null && tutorial.type == "GuidedSkill" && !tutorialsSeen.Contains(Session.Level.id) && Session.AnySkillReady() && !Session.SkillLocked;
+        }
+        // ---- 안내형 튜토리얼(기획서 13.3) ----
+        // 처음 플레이할 때만, 지정한 칸·초상화만 밝게 두고 손가락으로 가리킵니다. 지정한 입력 외의 터치는 무시합니다.
+        // 일시정지 버튼은 언제든 나갈 수 있도록 막지 않습니다.
+        public bool GuideActive { get { return Session != null && Session.Outcome == SessionOutcome.Idle && (IsGuidedTurn() || IsGuidedSkill()); } }
+        // 스킬 안내 중에는 보드를 눌러도 아무 일도 일어나지 않습니다(스왑·미리보기 취소 모두 막음).
+        public bool GuideBlocksBoard { get { return Session != null && Session.Outcome == SessionOutcome.Idle && IsGuidedSkill(); } }
+        private CellPosition GuideCell(int index)
+        {
+            int[] cell = Session.Level.tutorial.swap[index];
+            return new CellPosition(cell[0],cell[1]);
+        }
+        private bool IsGuideSwap(CellPosition a, CellPosition b)
+        {
+            CellPosition first = GuideCell(0), second = GuideCell(1);
+            return (a.Equals(first) && b.Equals(second)) || (a.Equals(second) && b.Equals(first));
+        }
+        // 스킬 안내에서 눌러야 하는 초상화 칸. 레벨 데이터의 charId 캐릭터가 파티에 없으면 -1입니다.
+        private int GuideSlot()
+        {
+            for (int i = 0; i < Session.Party.Length; i++)
+                if (Session.Party[i] != null && Session.Party[i].character.id == Session.Level.tutorial.charId &&
+                    Session.GetSkillState(i) == SkillState.Ready) return i;
+            return -1;
+        }
+        private void ShowGuide()
+        {
+            if (guide == null) return;
+            if (!GuideActive || Busy) { HideGuide(); return; }
+            hintVisible = true;
+            if (IsGuidedTurn())
+            {
+                CellPosition a = GuideCell(0), b = GuideCell(1);
+                board.Preview(new List<CellPosition> { a, b });
+                guide.ShowDrag(board.At(a).transform.position,board.At(b).transform.position);
+                return;
+            }
+            int slot = GuideSlot();
+            if (slot < 0) { HideGuide(); return; }
+            if (PreviewSlot == slot) guide.ShowTap(GuidePoint(hud.skillUse.transform,0.8f));
+            else
+            {
+                // 초상화를 누르기 전에는 보드 전체를 어둡게 해 초상화로 눈이 가게 합니다.
+                board.Preview(new List<CellPosition>());
+                guide.ShowTap(GuidePoint(hud.party.slots[slot].transform,0.45f));
+            }
+        }
+        // 손끝이 가리킬 곳: 글자나 얼굴을 가리지 않도록 대상의 가운데에서 아래쪽으로 내립니다(0 = 가운데, 1 = 아래 끝).
+        private static Vector3 GuidePoint(Transform target, float down)
+        {
+            Vector3[] corners = new Vector3[4];
+            ((RectTransform)target).GetWorldCorners(corners);
+            Vector3 center = (corners[0]+corners[2])*0.5f, bottom = (corners[0]+corners[3])*0.5f;
+            return Vector3.Lerp(center,bottom,down);
+        }
+        private void HideGuide()
+        {
+            if (guide == null || !guide.Visible) return;
+            guide.Hide();
+            if (PreviewSlot < 0) board.Preview(null);
         }
         private static string TutorialText(TutorialData tutorial)
         {
@@ -413,6 +506,14 @@ namespace StardustAtelier.View
             if (Config == null) return;
             // 음량을 바꾼 뒤 손을 떼면 저장합니다.
             if (soundDirty && (Pointer.current == null || !Pointer.current.press.isPressed)) { soundDirty = false; WriteProgress(); }
+            // 테스트용 키: PageDown = 다음 레벨, PageUp = 이전 레벨, Home = 레벨 1, End = 마지막 레벨.
+            if (DevTools && Keyboard.current != null)
+            {
+                if (Keyboard.current.pageDownKey.wasPressedThisFrame) JumpLevel(1);
+                else if (Keyboard.current.pageUpKey.wasPressedThisFrame) JumpLevel(-1);
+                else if (Keyboard.current.homeKey.wasPressedThisFrame) JumpLevel(-levels.Count);
+                else if (Keyboard.current.endKey.wasPressedThisFrame) JumpLevel(levels.Count);
+            }
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 // 뒤로 가기(13.3): 팝업이 있으면 닫고, 스킬 미리보기면 취소, 인게임 대기·마지막 기회면 일시정지를 엽니다.
@@ -428,6 +529,8 @@ namespace StardustAtelier.View
         }
         public void Touch()
         {
+            // 안내 중에는 밝게 둔 칸 표시를 지우지 않습니다.
+            if (GuideActive) return;
             hintTime = 0; hintVisible = false; board.ClearMarks();
             if (selection.HasValue) board.Mark(selection.Value,SelectColor);
         }
@@ -435,7 +538,15 @@ namespace StardustAtelier.View
         private static readonly Color HintColor = new Color(1,1,1,0.85f);
         public void Tap(CellPosition p)
         {
-            if (!CanInput) return; Touch();
+            if (!CanInput) return;
+            if (GuideActive)
+            {
+                // 안내 중에는 지정한 두 칸만 받습니다. 한 칸을 누른 뒤 다른 칸을 누르면 교환합니다.
+                if (!IsGuidedTurn() || (!p.Equals(GuideCell(0)) && !p.Equals(GuideCell(1)))) return;
+                if (selection.HasValue && !selection.Value.Equals(p)) TrySwap(selection.Value,p); else selection = p;
+                return;
+            }
+            Touch();
             if (!Session.Board.Contains(p) || !Session.Board[p].CanSwap)
             { selection = null; board.ClearMarks(); return; }
             // 특수 블록 클릭은 선택 여부와 관계없이 즉시 단독 발동합니다. 조합은 드래그로 교환합니다.
@@ -454,14 +565,21 @@ namespace StardustAtelier.View
         }
         public void TrySwap(CellPosition a, CellPosition b)
         {
-            if (!CanInput) return; Touch(); selection = null; board.ClearMarks();
+            if (!CanInput) return;
+            if (GuideActive)
+            {
+                // 지정한 교환이 아니면 무시합니다. 지정 입력이 끝나면 안내를 닫고 본 것으로 저장합니다.
+                if (!IsGuidedTurn() || !IsGuideSwap(a,b)) return;
+                tutorialsSeen.Add(Session.Level.id); WriteProgress(); HideGuide();
+            }
+            Touch(); selection = null; board.ClearMarks();
             if (!Session.Board.Contains(a) || !Session.Board[a].CanSwap) return;
             if (!Session.Board.Contains(b) || !Session.Board[b].CanSwap)
             { StartCoroutine(board.Shake(a,Config.input.shakeSec)); return; }
             BeginTurn();
             StartCoroutine(SwapTurn(a,b));
         }
-        private void BeginTurn() { Busy = true; hud.Busy(true); hud.party.Refresh(); }
+        private void BeginTurn() { HideGuide(); Busy = true; hud.Busy(true); hud.party.Refresh(); }
         private IEnumerator SwapTurn(CellPosition a, CellPosition b)
         {
             LastEvents = Session.Swap(a,b);
@@ -477,6 +595,8 @@ namespace StardustAtelier.View
         public void TapPortrait(int slot)
         {
             if (Busy || modal.activeSelf || Session == null || Session.Outcome != SessionOutcome.Idle) return;
+            // 안내 중에는 지정한 초상화만 받습니다(스왑 안내 중에는 초상화를 받지 않습니다).
+            if (GuideActive && (!IsGuidedSkill() || slot != GuideSlot())) return;
             // 미리보기 중인 같은 초상화를 다시 누르면 발동합니다.
             if (PreviewSlot == slot) { UseSkillNow(); return; }
             SkillState state = Session.GetSkillState(slot);
@@ -489,6 +609,8 @@ namespace StardustAtelier.View
             PreviewSlot = slot;
             board.Preview(Session.SkillTargetsFor(slot));
             hud.ShowSkillPanel(Session.Party[slot],GaugeLine(slot)); hud.party.Highlight(slot);
+            // 스킬 안내의 다음 단계: 손가락이 [발동] 버튼으로 옮겨 갑니다.
+            if (GuideActive) ShowGuide();
         }
         // 예: "초록 블록을 모으면 게이지가 차요 (9/15)". 숫자는 블록 개수 단위(내림(단위/12) / 필요량)입니다.
         private string GaugeLine(int slot)
@@ -614,6 +736,8 @@ namespace StardustAtelier.View
         private void ShowHint()
         {
             if (Session == null || Session.Outcome != SessionOutcome.Idle || Session.LastChance) return;
+            // 안내 중에는 힌트 대신 안내 표시를 다시 그립니다(일시정지 팝업을 닫은 뒤 등).
+            if (GuideActive && guide != null) { ShowGuide(); return; }
             bool guided = IsGuidedTurn();
             CellPosition? activation = MoveFinder.FindActivation(Session.Board);
             if (!guided && activation.HasValue)
@@ -812,7 +936,8 @@ namespace StardustAtelier.View
         }
         private void Popup(string title, string body, string first, Action firstAction, string second, Action secondAction, string third, Action thirdAction)
         {
-            selection = null; board.ClearMarks(); hintTime = 0;
+            selection = null; board.ClearMarks(); hintTime = 0; hintVisible = false;
+            if (guide != null) guide.Hide();
             popupTitle.text = title; popupBody.text = body;
             popupBody.gameObject.SetActive(!string.IsNullOrEmpty(body));
             popupStarRow.SetActive(false); popupGoalRow.SetActive(false); popupPicture.SetActive(false);

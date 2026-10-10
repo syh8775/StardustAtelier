@@ -38,9 +38,13 @@ namespace StardustAtelier.Core
         public int ice;
         public bool chained;
         public Occupant occupant = Occupant.Empty;
-        public bool CanSwap { get { return exists && !chained && (occupant.IsColored || occupant.IsSpecial); } }
+        // 얼음에 갇힘(2026-10-10 변경): 얼음이 남아 있는 칸의 색 블록·특수 블록은 얼음이 다 깨질 때까지 옮길 수도, 떨어질 수도 없습니다.
+        // 유물은 얼지 않습니다(얼음 칸에 들어가도 계속 떨어지고 옮길 수 있어, 유물 내리기가 막히지 않습니다).
+        public bool Frozen { get { return exists && ice > 0 && (occupant.IsColored || occupant.IsSpecial); } }
+        // 유물도 블록과 자리를 바꿀 수 있습니다(2026-10-10 변경). 바꾼 블록이 매치를 만들 때만 유효한 수입니다.
+        public bool CanSwap { get { return exists && !chained && !Frozen && (occupant.IsColored || occupant.IsSpecial || occupant.kind == OccupantKind.Relic); } }
         public bool CanMatch { get { return exists && occupant.IsColored; } }
-        public bool IsFixed { get { return exists && (chained || occupant.kind == OccupantKind.Box || occupant.kind == OccupantKind.Vine); } }
+        public bool IsFixed { get { return exists && (chained || Frozen || occupant.kind == OccupantKind.Box || occupant.kind == OccupantKind.Vine); } }
         public Cell Clone() { return new Cell { exists = exists, ice = ice, chained = chained, occupant = occupant }; }
     }
 

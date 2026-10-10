@@ -164,6 +164,38 @@ namespace StardustAtelier.Tests
             Assert.That(board[1,0].occupant.color,Is.EqualTo(BlockColor.G));
             Assert.That(board[3,0].occupant.color,Is.EqualTo(BlockColor.B));
         }
+        // 얼음에 갇힌 블록은 옮길 수도 떨어질 수도 없고, 매치에는 포함됩니다. 얼음이 다 깨지면 다시 움직입니다.
+        [Test] public void FrozenBlockCannotSwapOrFallUntilIceBreaks()
+        {
+            Board board=Make("R","G","B","-"); board[1,0].ice=1;
+            Assert.That(board[1,0].CanSwap,Is.False); Assert.That(board[1,0].CanMatch,Is.True);
+            Assert.That(MoveFinder.IsValid(board,new CellPosition(0,0),new CellPosition(1,0),false),Is.False);
+            List<GravityEvent> events=new List<GravityEvent>(); Gravity.Collapse(board,events);
+            Assert.That(board[1,0].occupant.color,Is.EqualTo(BlockColor.G));
+            Assert.That(board[3,0].occupant.color,Is.EqualTo(BlockColor.B));
+            board[1,0].ice=0; Gravity.Collapse(board,events);
+            Assert.That(board[1,0].CanSwap,Is.True);
+            Assert.That(board[2,0].occupant.color,Is.EqualTo(BlockColor.G));
+        }
+        // 얼음에 갇힌 특수 블록은 옮기지 못하지만 눌러서 발동할 수는 있습니다. 유물은 얼지 않습니다.
+        [Test] public void FrozenSpecialStillActivatesAndRelicNeverFreezes()
+        {
+            Board board=Make("R","O","-");
+            board[0,0].occupant=new Occupant { kind=OccupantKind.Bomb,color=BlockColor.None }; board[0,0].ice=1; board[1,0].ice=2;
+            Assert.That(board[0,0].CanSwap,Is.False);
+            Assert.That(MoveFinder.CanActivate(board,new CellPosition(0,0)),Is.True);
+            Assert.That(board[1,0].CanSwap,Is.True);
+            List<GravityEvent> events=new List<GravityEvent>(); Gravity.Collapse(board,events);
+            Assert.That(board[2,0].occupant.kind,Is.EqualTo(OccupantKind.Relic));
+        }
+        // 유물은 블록과 자리를 바꿀 수 있습니다. 바꾼 블록이 매치를 만들 때만 유효한 수입니다.
+        [Test] public void RelicSwapsOnlyWhenTheBlockMakesAMatch()
+        {
+            Board board=Make("RRBG","GYOR","BGRY");
+            Assert.That(MoveFinder.IsValid(board,new CellPosition(1,2),new CellPosition(1,3),false),Is.False);
+            board=Make("RROG","GYRB","BGYY");
+            Assert.That(MoveFinder.IsValid(board,new CellPosition(0,2),new CellPosition(1,2),false),Is.True);
+        }
         [Test] public void StackedRelicsCollectBeforeRefill()
         {
             Board board=Make("R","O","O","#");

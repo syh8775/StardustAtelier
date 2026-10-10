@@ -61,7 +61,12 @@ namespace StardustAtelier.View
         private CellPosition? selection;
         private bool skipIntro, hintVisible;
         private float hintTime;
-        // 진행 저장(14.3)이 붙기 전까지는 실행 중에만 기억합니다. unlocked는 열린 마지막 레벨의 번호 순서(0부터)입니다.
+        // 진행은 save.json에 저장합니다(14.3). 아래 값은 저장 내용을 화면에서 쓰기 좋게 풀어 둔 것입니다.
+        // unlocked는 열린 마지막 레벨의 번호 순서(0부터)입니다: 클리어한 레벨 + 다음 1개.
+        // 테스트는 실제 저장을 건드리지 않도록 SaveDirectoryOverride로 저장 폴더를 바꿉니다.
+        public static string SaveDirectoryOverride;
+        public bool SaveRecovered { get; private set; }
+        private SaveData save;
         private int unlocked, current;
         private int[] bestStars;
         private readonly HashSet<int> tutorialsSeen = new HashSet<int>();
@@ -90,7 +95,7 @@ namespace StardustAtelier.View
         private void Start()
         {
             Application.runInBackground = true; Application.targetFrameRate = 60;
-            Load();
+            Load(); LoadProgress();
             hud.pause.onClick.AddListener(Pause);
             hud.skillUse.onClick.AddListener(UseSkillNow);
             hud.skillCancel.onClick.AddListener(CancelSkill);
@@ -103,6 +108,64 @@ namespace StardustAtelier.View
             pickerClose.onClick.AddListener(() => picker.SetActive(false));
             map.Bind(this);
             ShowMap();
+            // 저장 파일을 읽지 못했으면 새로 시작했다고 한 번 알립니다(14.3. 타이틀 화면이 생기면 그쪽으로 옮깁니다).
+            if (SaveRecovered) Popup("알림","저장 파일을 읽지 못해 새로 시작해요","확인",() => modal.SetActive(false),null,null,null,null);
+        }
+        private static string SaveDirectory { get { return SaveDirectoryOverride ?? Application.persistentDataPath; } }
+        // 저장을 읽어 화면에서 쓰는 값으로 풉니다.
+        private void LoadProgress()
+        {
+            bool recovered;
+            save = SaveService.Load(SaveDirectory,out recovered); SaveRecovered = recovered;
+            SaveService.Normalize(save,new LevelCatalog { version = 1, levels = levels.ToArray() },catalog);
+            unlocked = 0; owned.Clear(); tutorialsSeen.Clear(); itemsExplained.Clear();
+            for (int i = 0; i < levels.Count; i++)
+            {
+                LevelSave level;
+                bestStars[i] = save.levels.TryGetValue(levels[i].id.ToString(),out level) && level.cleared ? Math.Max(1,level.bestStars) : 0;
+                if (bestStars[i] > 0) unlocked = Math.Max(unlocked,Math.Min(i+1,levels.Count-1));
+            }
+            foreach (string key in save.characters.Keys) { int id; if (int.TryParse(key,out id) && Character(id) != null) owned.Add(id); }
+            lastParty = new int[save.lastParty.Length];
+            for (int i = 0; i < lastParty.Length; i++) lastParty[i] = save.lastParty[i] ?? 0;
+            foreach (int id in save.tutorialsSeen) tutorialsSeen.Add(id);
+            foreach (string name in save.itemsSeen) { OccupantKind kind; if (Enum.TryParse(name,out kind)) itemsExplained.Add(kind); }
+        }
+        // 화면의 값을 저장 형식으로 옮겨 씁니다. 저장 시점: 결과 팝업, 캐릭터 지급, 튜토리얼 완료, 일시정지에서 나가기(14.3).
+        private void WriteProgress()
+        {
+            if (save == null) return;
+            for (int i = 0; i < levels.Count; i++)
+            {
+                if (bestStars[i] <= 0) continue;
+                LevelSave level = SaveService.Level(save,levels[i].id);
+                level.cleared = true; level.bestStars = bestStars[i];
+            }
+            foreach (int id in owned) if (!save.characters.ContainsKey(id.ToString())) save.characters[id.ToString()] = new CharacterSave();
+            save.lastParty = new int?[lastParty.Length];
+            for (int i = 0; i < lastParty.Length; i++) save.lastParty[i] = lastParty[i] == 0 ? (int?)null : lastParty[i];
+            save.tutorialsSeen = new List<int>(tutorialsSeen); save.tutorialsSeen.Sort();
+            save.itemsSeen = new List<string>();
+            foreach (OccupantKind kind in itemsExplained) save.itemsSeen.Add(kind.ToString());
+            save.itemsSeen.Sort();
+            SaveService.Save(SaveDirectory,save);
+        }
+        // 한 판이 끝날 때 시도 횟수와 연속 실패(10.5)를 적습니다. 클리어하면 연속 실패는 0으로 돌아갑니다.
+        // 실패, 다시 시작, 맵으로 나가기는 이동을 1 이상 쓴 경우에만 연속 실패를 1 올립니다.
+        private void RecordAttempt(bool cleared)
+        {
+            if (save == null || Session == null) return;
+            LevelSave level = SaveService.Level(save,Session.Level.id);
+            level.attempts++;
+            if (cleared) level.consecutiveFails = 0;
+            else if (Session.Turns > 0) level.consecutiveFails++;
+        }
+        // 이동을 쓴 판을 버리고 나갈 때(다시 시작·맵으로) 기록하고 저장합니다.
+        private void Abandon() { RecordAttempt(false); WriteProgress(); }
+        private int CharacterLevel(int id)
+        {
+            CharacterSave character;
+            return save != null && save.characters.TryGetValue(id.ToString(),out character) && character != null ? character.level : 1;
         }
         public void Load()
         {
@@ -113,6 +176,8 @@ namespace StardustAtelier.View
             catalog = DataLoader.LoadCharacters(directory);
             bestStars = new int[levels.Count];
             PreviewSlot = -1;
+            // 저장을 읽기 전(Editor 미리보기 등)에는 빈 진행으로 둡니다. 실제 읽기는 Start의 LoadProgress가 합니다.
+            if (save == null) save = new SaveData();
         }
         public IList<LevelData> Levels { get { Load(); return levels; } }
         public int Unlocked { get { return unlocked; } }
@@ -153,8 +218,8 @@ namespace StardustAtelier.View
             for (int i = 0; i < ids.Length; i++)
             {
                 if (ids[i] == 0) continue;
-                // 성장(12.6)이 붙기 전까지 모든 캐릭터는 Lv 1입니다.
-                PartyMember member = new PartyMember { level = 1, costReductionPerLevel = catalog.growth.costReductionPerLevel };
+                // 캐릭터 레벨은 저장에서 읽습니다. 레벨업 화면(12.6)이 붙기 전까지는 모두 Lv 1입니다.
+                PartyMember member = new PartyMember { level = CharacterLevel(ids[i]), costReductionPerLevel = catalog.growth.costReductionPerLevel };
                 foreach (CharacterData c in catalog.characters) if (c.id == ids[i]) member.character = c;
                 foreach (SkillData s in catalog.skills) if (member.character != null && s.id == member.character.skillId) member.skill = s;
                 if (member.character != null && member.skill != null) party[i] = member;
@@ -204,7 +269,7 @@ namespace StardustAtelier.View
                 Popup(obstacle ? "새로운 장애물!" : "새로운 블록!",TutorialText(tutorial),"확인",() => { modal.SetActive(false); closed = true; },null,null,null,null);
                 ShowPicture(TutorialPicture(tutorial.textKey));
                 while (!closed && !skipIntro && modal.activeSelf) yield return null;
-                modal.SetActive(false); tutorialsSeen.Add(Session.Level.id);
+                modal.SetActive(false); tutorialsSeen.Add(Session.Level.id); WriteProgress();
             }
             ShowIntroBanner();
             float elapsed = 0;
@@ -367,7 +432,7 @@ namespace StardustAtelier.View
         private IEnumerator SkillTurn(int slot)
         {
             LastEvents = Session.UseSkill(slot);
-            if (Session.Level.tutorial != null && Session.Level.tutorial.type == "GuidedSkill") tutorialsSeen.Add(Session.Level.id);
+            if (Session.Level.tutorial != null && Session.Level.tutorial.type == "GuidedSkill" && tutorialsSeen.Add(Session.Level.id)) WriteProgress();
             yield return ReplayTurn();
         }
         public void EndLastChance()
@@ -376,6 +441,7 @@ namespace StardustAtelier.View
             CancelSkill();
             LastEvents = Session.EndLastChance();
             hud.endButton.gameObject.SetActive(false); hud.HideTip();
+            RecordAttempt(false); WriteProgress();
             ShowResult(false);
         }
         private IEnumerator ReplayTurn()
@@ -401,9 +467,10 @@ namespace StardustAtelier.View
                 FirstClearData grant = Session.Level.onFirstClear;
                 if (firstClear && grant != null && grant.grantCharacter != 0 && !owned.Contains(grant.grantCharacter))
                 { owned.Add(grant.grantCharacter); pendingJoin = grant.grantCharacter; }
+                RecordAttempt(true); WriteProgress();
                 ShowResult(true);
             }
-            else if (Session.Outcome == SessionOutcome.Fail) ShowResult(false);
+            else if (Session.Outcome == SessionOutcome.Fail) { RecordAttempt(false); WriteProgress(); ShowResult(false); }
             Busy = false; hud.Busy(false); hintTime = 0;
         }
         // ---- 아이템 첫 생성 설명(2026-10-10 사용자 변경, 기획서 13.4) ----
@@ -427,7 +494,7 @@ namespace StardustAtelier.View
                     fresh.Add(item.occupant.kind);
             foreach (OccupantKind kind in fresh)
             {
-                itemsExplained.Add(kind);
+                itemsExplained.Add(kind); WriteProgress();
                 bool closed = false;
                 Popup("새로운 아이템!",itemTexts[kind],"확인",() => { modal.SetActive(false); closed = true; },null,null,null,null);
                 ShowPicture(ItemPicture(kind));
@@ -483,13 +550,13 @@ namespace StardustAtelier.View
         {
             if (Busy) return;
             if (Session.Turns == 0) { StartLevel(current); return; }
-            Popup("다시 시작할까요?","진행한 내용이 사라져요","다시 시작",() => StartLevel(current),"계속하기",() => modal.SetActive(false),null,null);
+            Popup("다시 시작할까요?","진행한 내용이 사라져요","다시 시작",() => { Abandon(); StartLevel(current); },"계속하기",() => modal.SetActive(false),null,null);
         }
         public void RequestMap()
         {
             if (Busy) return;
             if (Session.Turns == 0 || Session.Outcome != SessionOutcome.Idle) { ShowMap(); return; }
-            Popup("맵으로 나갈까요?","진행한 내용이 사라져요","나가기",ShowMap,"계속하기",() => modal.SetActive(false),null,null);
+            Popup("맵으로 나갈까요?","진행한 내용이 사라져요","나가기",() => { Abandon(); ShowMap(); },"계속하기",() => modal.SetActive(false),null,null);
         }
         public void ShowMap()
         {

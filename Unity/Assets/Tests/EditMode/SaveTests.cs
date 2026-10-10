@@ -56,6 +56,17 @@ namespace StardustAtelier.Tests
             Assert.That(File.Exists(Path.Combine(directory,SaveService.BadName)),Is.True);
             Assert.That(File.Exists(Path.Combine(directory,SaveService.FileName)),Is.False);
         }
+        // 골드 보상(10.4): 첫 클리어 100 + 50 × (별 − 1), 다시 클리어 20 + 50 × 새로 얻은 별 수.
+        [Test] public void ClearGoldFollowsFirstClearAndReplayRules()
+        {
+            RewardConfig rewards = DataLoader.LoadConfig(Data).rewards;
+            Assert.That(ProgressService.ClearGold(rewards,1,0),Is.EqualTo(100));
+            Assert.That(ProgressService.ClearGold(rewards,3,0),Is.EqualTo(200));
+            Assert.That(ProgressService.ClearGold(rewards,3,1),Is.EqualTo(120)); // E39: 최고 별 1 → 3으로 다시 클리어
+            Assert.That(ProgressService.ClearGold(rewards,2,2),Is.EqualTo(20));
+            Assert.That(ProgressService.ClearGold(rewards,1,3),Is.EqualTo(20));
+            Assert.That(ProgressService.ClearGold(rewards,0,0),Is.Zero);  // 실패는 보상 없음
+        }
         [Test] public void NormalizeClampsValuesAndRestoresGrantedCharacters()
         {
             LevelCatalog levels = DataLoader.LoadLevels(Data); CharacterCatalog characters = DataLoader.LoadCharacters(Data);

@@ -294,6 +294,10 @@ namespace StardustAtelier.PlayTests
             Assert.That(recovered,Is.False); Assert.That(saved.levels["1"].cleared,Is.True);
             Assert.That(saved.levels["1"].bestStars,Is.EqualTo(app.Session.Stars)); Assert.That(saved.levels["1"].attempts,Is.EqualTo(1));
             Assert.That(saved.characters.ContainsKey("105"),Is.True);
+            // 첫 클리어 골드 = 100 + 50 × (별 − 1). 결과 팝업에 보여주고 저장합니다(10.4).
+            int gold = 100+50*(app.Session.Stars-1);
+            Assert.That(saved.gold,Is.EqualTo(gold)); Assert.That(app.Gold,Is.EqualTo(gold));
+            Assert.That(app.popupGoldRow.activeSelf,Is.True); Assert.That(app.popupGoldText.text,Is.EqualTo("+"+gold));
             // 다음 레벨은 레벨 진입 팝업을 거쳐 [시작]으로 들어갑니다(13.1).
             Click(app.primary); yield return null;
             // 레벨 1 첫 클리어로 세이지가 합류하면 합류 팝업을 먼저 닫습니다(13.1).

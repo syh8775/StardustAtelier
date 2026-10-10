@@ -156,6 +156,42 @@ namespace StardustAtelier.Tests
             Assert.That(session.Swap(new CellPosition(0,0),new CellPosition(0,1)),Is.Empty);
         }
 
+        // 별똥별은 가장 많이 남은 목표를 먼저 노립니다. 그 목표의 칸이 보드에 없으면 다음으로 많이 남은 목표로 넘어갑니다.
+        [Test] public void MeteorTargetsTheGoalWithMostRemaining()
+        {
+            for (ulong seed = 1; seed <= 20; seed++)
+            {
+                Board board = Make("RRB","GGY","YGR");
+                board[1,1].occupant = new Occupant { kind=OccupantKind.Meteor,color=BlockColor.None };
+                GoalTracker goals = new GoalTracker(new[] { new GoalData { type="Collect",color="R",count=2 },new GoalData { type="Collect",color="B",count=5 } });
+                new Resolver(board,goals,seed).Activate(new CellPosition(1,1),new List<GameEvent>());
+                Assert.That(board[0,2].occupant.kind,Is.EqualTo(OccupantKind.Empty),"seed "+seed);
+                Assert.That(goals.Remaining(0),Is.EqualTo(2));
+                // 파랑이 보드에 없으면 다음으로 많이 남은 빨강을 노립니다.
+                board = Make("RRG","GGY","YGR");
+                board[1,1].occupant = new Occupant { kind=OccupantKind.Meteor,color=BlockColor.None };
+                goals = new GoalTracker(new[] { new GoalData { type="Collect",color="R",count=2 },new GoalData { type="Collect",color="B",count=5 } });
+                new Resolver(board,goals,seed).Activate(new CellPosition(1,1),new List<GameEvent>());
+                Assert.That(goals.Remaining(0),Is.EqualTo(1),"seed "+seed);
+            }
+        }
+
+        // 아이템을 유물 칸으로 옮기면 색 블록과 바꿀 때처럼 도착 칸에서 발동합니다.
+        [TestCase(OccupantKind.Rocket)]
+        [TestCase(OccupantKind.Bomb)]
+        [TestCase(OccupantKind.Meteor)]
+        public void SpecialMovedOntoRelicActivatesAtDestination(OccupantKind kind)
+        {
+            GameSession session = new GameSession(FirstLevel(),Config(),63);
+            CellPosition from = new CellPosition(0,0), to = new CellPosition(1,0);
+            session.Board[from].occupant = new Occupant { kind=kind,color=BlockColor.None,orientation=Orientation.H };
+            session.Board[to].occupant = new Occupant { kind=OccupantKind.Relic,color=BlockColor.None };
+            List<GameEvent> events = session.Swap(from,to);
+            Assert.That(events.Exists(e=>e.kind==GameEventKind.SwapRejected),Is.False);
+            Assert.That(session.Turns,Is.EqualTo(1));
+            Assert.That(events.Exists(e=>e.kind==GameEventKind.SpecialActivated && e.position.Equals(to) && e.occupant.kind==kind),Is.True);
+        }
+
         // 단독 클릭의 효과·이동·잠금·종료 판정을 기존 턴과 같은 경로로 검사합니다.
         [TestCase(OccupantKind.Rocket)]
         [TestCase(OccupantKind.Bomb)]

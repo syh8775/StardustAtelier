@@ -22,6 +22,10 @@ namespace StardustAtelier.PlayTests
             saveDirectory = System.IO.Path.Combine(System.IO.Path.GetTempPath(),"stardust-play-test-"+Guid.NewGuid().ToString("N"));
             System.IO.Directory.CreateDirectory(saveDirectory);
             StardustApp.SaveDirectoryOverride = saveDirectory;
+            // 안내형 튜토리얼(레벨 1·2·4)은 지정 입력만 받으므로, 다른 검사들은 이미 본 상태로 시작합니다.
+            StardustAtelier.Meta.SaveData seen = new StardustAtelier.Meta.SaveData();
+            seen.tutorialsSeen.AddRange(new[] { 1,2,4 });
+            StardustAtelier.Meta.SaveService.Save(saveDirectory,seen);
             SceneManager.LoadScene("Stardust");
             yield return null;
             app = UnityEngine.Object.FindFirstObjectByType<StardustApp>();
@@ -110,6 +114,76 @@ namespace StardustAtelier.PlayTests
             app.StartLevel(2,7); Assert.That(app.Session.Assisted,Is.True);
             app.StartLevel(9,7); Assert.That(app.Session.Level.hard,Is.True); Assert.That(app.Session.Assisted,Is.False);
             app.SkipIntro(); yield return Ready();
+        }
+        // 저장을 비우고 씬을 다시 불러 처음 플레이하는 상태로 만듭니다.
+        private IEnumerator FreshStart()
+        {
+            foreach (string file in System.IO.Directory.GetFiles(saveDirectory)) System.IO.File.Delete(file);
+            SceneManager.LoadScene("Stardust");
+            yield return null; yield return null;
+            app = UnityEngine.Object.FindFirstObjectByType<StardustApp>();
+        }
+        // 안내형 튜토리얼(13.3): 처음 플레이하는 레벨 1은 손가락이 가리키는 교환만 받습니다.
+        [UnityTest] public IEnumerator GuidedTutorialAcceptsOnlyTheShownSwap()
+        {
+            yield return FreshStart();
+            app.StartLevel(0,63); app.SkipIntro(); yield return Ready();
+            Assert.That(app.GuideActive,Is.True); Assert.That(app.guide.Visible,Is.True);
+            int[][] swap = app.Session.Level.tutorial.swap;
+            CellPosition a = new CellPosition(swap[0][0],swap[0][1]), b = new CellPosition(swap[1][0],swap[1][1]);
+            // 다른 유효한 수는 무시합니다.
+            foreach (ValidMove move in MoveFinder.Find(app.Session.Board,false))
+            {
+                bool shown = (move.a.Equals(a) && move.b.Equals(b)) || (move.a.Equals(b) && move.b.Equals(a));
+                if (shown) continue;
+                DragSwap(move.a,move.b); yield return null;
+                Assert.That(app.Session.Turns,Is.EqualTo(0)); Assert.That(app.Busy,Is.False);
+                break;
+            }
+            DragSwap(a,b);
+            Assert.That(app.Session.Turns,Is.EqualTo(1));
+            Assert.That(app.guide.Visible,Is.False);
+            yield return Ready();
+            Assert.That(app.GuideActive,Is.False);
+            // 지정 입력을 마치면 본 것으로 저장하고, 다시 시작해도 안내하지 않습니다.
+            bool recovered; Assert.That(StardustAtelier.Meta.SaveService.Load(saveDirectory,out recovered).tutorialsSeen,Does.Contain(1));
+            app.StartLevel(0,63); app.SkipIntro(); yield return Ready();
+            Assert.That(app.GuideActive,Is.False); Assert.That(app.guide.Visible,Is.False);
+        }
+        // 스킬 안내(레벨 2): 보드와 [취소]는 받지 않고, 세이지 초상화 → [발동]만 받습니다.
+        [UnityTest] public IEnumerator GuidedSkillAcceptsOnlyPortraitThenUse()
+        {
+            yield return FreshStart();
+            app.StartLevel(1,5,new[] { 105,0,0 }); app.SkipIntro(); yield return Ready();
+            Assert.That(app.GuideActive,Is.True); Assert.That(app.guide.Visible,Is.True);
+            ValidMove move = MoveFinder.Find(app.Session.Board,false)[0];
+            DragSwap(move.a,move.b); yield return null;
+            Assert.That(app.Session.Turns,Is.EqualTo(0));
+            Click(app.hud.party.slots[0].button); yield return null;
+            Assert.That(app.PreviewSlot,Is.EqualTo(0));
+            // 미리보기 중에 보드를 누르거나 [취소]를 눌러도 미리보기가 유지됩니다.
+            Tap(move.a); Click(app.hud.skillCancel);
+            Assert.That(app.PreviewSlot,Is.EqualTo(0));
+            Click(app.hud.skillUse);
+            Assert.That(app.guide.Visible,Is.False);
+            yield return Ready();
+            Assert.That(app.GuideActive,Is.False);
+            Assert.That(app.LastEvents.Exists(e=>e.kind==GameEventKind.SkillUsed),Is.True);
+        }
+        // 테스트용 도구: 레벨 바로 가기는 잠긴 레벨의 진입 팝업을 열고, 진행 초기화는 처음 상태로 되돌립니다.
+        [UnityTest] public IEnumerator DevToolsJumpLevelAndResetProgress()
+        {
+            app.JumpLevel(4); yield return null;
+            Assert.That(app.modal.activeSelf,Is.True); Assert.That(app.popupTitle.text,Is.EqualTo("레벨 5"));
+            Click(app.primary); app.SkipIntro(); yield return Ready();
+            Assert.That(app.Session.Level.id,Is.EqualTo(5));
+            app.ResetProgress(); yield return null;
+            Assert.That(app.map.gameObject.activeSelf,Is.True);
+            bool recovered;
+            StardustAtelier.Meta.SaveData data = StardustAtelier.Meta.SaveService.Load(saveDirectory,out recovered);
+            Assert.That(data.tutorialsSeen,Is.Empty); Assert.That(data.gold,Is.EqualTo(0));
+            // 초기화 뒤에는 잠금도 처음 상태입니다: 레벨 2 진입 팝업이 열리지 않습니다.
+            app.OpenEntry(1); Assert.That(app.modal.activeSelf,Is.False);
         }
         private IEnumerator Ready()
         {

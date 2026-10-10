@@ -58,6 +58,10 @@ namespace StardustAtelier.PlayTests
             SceneManager.LoadScene("Stardust");
             yield return null; yield return null;
             app = UnityEngine.Object.FindFirstObjectByType<StardustApp>();
+            // 앱을 켜면 타이틀 화면이 먼저 나오고, 화면을 누르면 레벨 맵으로 갑니다(13.1).
+            Assert.That(app.titleScreen.activeSelf,Is.True); Assert.That(app.map.gameObject.activeSelf,Is.False);
+            Click(app.titleButton); yield return null;
+            Assert.That(app.titleScreen.activeSelf,Is.False); Assert.That(app.map.gameObject.activeSelf,Is.True);
             Click(app.map.charactersButton); yield return null;
             Assert.That(app.characters.gameObject.activeSelf,Is.True); Assert.That(app.map.gameObject.activeSelf,Is.False);
             Assert.That(app.characters.SelectedId,Is.EqualTo(105)); Assert.That(app.characters.levelText.text,Is.EqualTo("Lv 1"));
@@ -71,18 +75,22 @@ namespace StardustAtelier.PlayTests
             Click(app.characters.back); yield return null;
             Assert.That(app.map.gameObject.activeSelf,Is.True); Assert.That(app.map.goldText.text,Is.EqualTo("10"));
         }
-        // 맵 [설정] → 배경음 끄기: 바꾸면 즉시 저장합니다(13.2).
-        [UnityTest] public IEnumerator SettingsToggleSavesImmediately()
+        // 맵 [설정] → 배경음 음량을 줄이면 소리에 반영되고 저장됩니다(13.2). 100이 기본 음량입니다.
+        [UnityTest] public IEnumerator VolumeSliderChangesAndSaves()
         {
             app.ShowMap(); yield return null;
             Click(app.map.settingsButton); yield return null;
             Assert.That(app.modal.activeSelf,Is.True); Assert.That(app.popupTitle.text,Is.EqualTo("설정"));
-            Assert.That(app.BgmOn,Is.True);
-            Click(app.soundBgm); yield return null;
-            Assert.That(app.BgmOn,Is.False); Assert.That(app.soundBgmText.text,Is.EqualTo("배경음 꺼짐"));
+            Assert.That(app.BgmVolume,Is.EqualTo(100)); Assert.That(app.bgmSlider.value,Is.EqualTo(100));
+            Assert.That(app.bgmSlider.maxValue,Is.EqualTo(100));
+            app.bgmSlider.value = 30; yield return null; yield return null;
+            Assert.That(app.BgmVolume,Is.EqualTo(30)); Assert.That(app.bgmValue.text,Is.EqualTo("30"));
             bool recovered;
             StardustAtelier.Meta.SaveData saved = StardustAtelier.Meta.SaveService.Load(saveDirectory,out recovered);
-            Assert.That(saved.settings.bgm,Is.False); Assert.That(saved.settings.sfx,Is.True);
+            Assert.That(saved.settings.bgmVolume,Is.EqualTo(30)); Assert.That(saved.settings.sfxVolume,Is.EqualTo(100));
+            app.sfxSlider.value = 0; yield return null; yield return null;
+            saved = StardustAtelier.Meta.SaveService.Load(saveDirectory,out recovered);
+            Assert.That(saved.settings.sfxVolume,Is.Zero); Assert.That(saved.settings.sfx,Is.False);
             Click(app.primary); yield return null;
             Assert.That(app.modal.activeSelf,Is.False);
         }

@@ -1,1 +1,1 @@
-{"name":"StardustAtelier.View","references":["StardustAtelier.Core","StardustAtelier.Meta","UnityEngine.UI","Unity.TextMeshPro","Unity.InputSystem"]}
+{"name":"StardustAtelier.View","references":["StardustAtelier.Core","StardustAtelier.Meta","StardustAtelier.Vfx","UnityEngine.UI","Unity.TextMeshPro","Unity.InputSystem"]}

@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using StardustAtelier.View;
+using StardustAtelier.Vfx;
 
 // [실제 코드에 남길 주석] 플레이 씬(Assets/Scenes/Stardust.unity)을 처음부터 다시 만듭니다. 기존 SampleScene은 보존합니다.
 // 배치는 기획서 13장(세로 1080×1920)을 따릅니다. 그림은 Assets/Art/Placeholder의 같은 이름 파일을 씁니다.
@@ -35,10 +36,12 @@ public static class StardustSceneBuilder
         cameraObject.tag = "MainCamera"; cameraObject.transform.position = new Vector3(0,0,-10);
         Camera camera = cameraObject.GetComponent<Camera>();
         camera.orthographic = true; camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = ink;
-        GameObject root = new GameObject("Stardust",typeof(StardustApp),typeof(InputController),typeof(CellArt));
+        GameObject root = new GameObject("Stardust",typeof(StardustApp),typeof(InputController),typeof(CellArt),typeof(AudioService),typeof(VfxService));
         StardustApp app = root.GetComponent<StardustApp>();
         InputController input = root.GetComponent<InputController>(); input.app = app;
         CellArt art = root.GetComponent<CellArt>(); FillArt(art); app.art = art;
+        app.audioService = root.GetComponent<AudioService>(); FillAudio(app.audioService);
+        app.vfx = root.GetComponent<VfxService>(); FillVfx(app.vfx);
 
         GameObject canvasObject = new GameObject("Canvas",typeof(RectTransform),typeof(Canvas),typeof(UnityEngine.UI.CanvasScaler),typeof(UnityEngine.UI.GraphicRaycaster));
         Canvas canvas = canvasObject.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -50,6 +53,7 @@ public static class StardustSceneBuilder
         BuildGame(app,input,art,canvasObject.transform);
         BuildMap(app,canvasObject.transform);
         BuildCharacters(app,art,canvasObject.transform);
+        BuildTitle(app,canvasObject.transform);
         BuildModal(app,canvasObject.transform);
 
         GameObject eventObject = new GameObject("EventSystem",typeof(EventSystem),typeof(InputSystemUIInputModule));
@@ -72,6 +76,7 @@ public static class StardustSceneBuilder
         Picture(Stretch("Background",screen),bgGame,Color.white,false);
 
         HudView hud = screen.gameObject.AddComponent<HudView>(); app.hud = hud; hud.art = art;
+        hud.audioService = app.audioService; hud.vfx = app.vfx;
         hud.pause = IconButton("Pause",screen,-452,860,112,pause,panelLight);
         hud.title = Text("Level",screen,0,868,520,80,"레벨 1",46,Color.white,true);
 
@@ -99,6 +104,8 @@ public static class StardustSceneBuilder
         RectTransform floorLayer = Rect("FloorLayer",boardRect,0,0,1000,1000);
         board.cells = new CellView[81];
         for (int i = 0; i < board.cells.Length; i++) board.cells[i] = CreateCell(boardRect,floorLayer,i,input,art);
+        // 효과 층: 보드와 같은 크기·위치로 보드 위에 둡니다. 보드 마스크 밖이라 줄 끝·폭발이 잘리지 않습니다.
+        app.vfx.layer = Rect("VfxLayer",rim,0,0,1000,1000);
 
         // 안내 말풍선: 튜토리얼·셔플·스킬 안내·마지막 기회 문구(13.4, 9.3, 12.3, 10.3)를 표시합니다.
         RectTransform bubble = Panel("TipBubble",screen,0,-600,920,120,new Color(1f,0.97f,0.90f,0.97f),gold);
@@ -113,7 +120,17 @@ public static class StardustSceneBuilder
         RectTransform partyRect = Rect("PartyBar",screen,0,-815,1000,260);
         PartyBar party = partyRect.gameObject.AddComponent<PartyBar>(); hud.party = party;
         party.slots = new PartySlotView[3];
-        for (int i = 0; i < 3; i++) party.slots[i] = CreatePartySlot(partyRect,"Slot"+i,(i-1)*300,10,200,true);
+        for (int i = 0; i < 3; i++)
+        {
+            party.slots[i] = CreatePartySlot(partyRect,"Slot"+i,(i-1)*300,10,200,true);
+            // 게이지가 가득 찼을 때 초상화 둘레에 도는 반복 효과(vfx_gauge_full).
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VFX/vfx_gauge_full.prefab");
+            if (prefab == null) continue;
+            GameObject full = (GameObject)PrefabUtility.InstantiatePrefab(prefab,party.slots[i].transform);
+            ((RectTransform)full.transform).anchoredPosition = Vector2.zero;
+            StardustUiVfx effect = full.GetComponent<StardustUiVfx>(); effect.cellPixels = 262; effect.color = gold;
+            full.SetActive(false); party.slots[i].fullVfx = full;
+        }
 
         // 스킬 미리보기 패널(12.4): 스킬 이름·설명과 [발동] [취소].
         RectTransform skill = Panel("SkillPanel",screen,0,-600,1000,190,new Color(0.19f,0.14f,0.37f,1f),gold);
@@ -234,8 +251,10 @@ public static class StardustSceneBuilder
         for (int i = 0; i < 30; i++) map.nodes[i] = CreateNode(content,i,NodePosition(i));
         // 상단 제목은 스크롤 위에 고정합니다. 최종 로고 그림으로 바꿀 자리입니다.
         RectTransform header = Panel("Header",screen,0,862,1120,200,new Color(0.10f,0.07f,0.22f,0.92f),gold);
-        Text("Eyebrow",header,0,52,900,40,"S T A R D U S T   A T E L I E R",24,gold,false);
-        Text("Title",header,0,-12,900,100,"별가루 아틀리에",70,Color.white,true);
+        // 게임 로고(1024×512). 그림이 없으면 글자 제목으로 대신합니다.
+        Sprite logo = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/ui_logo.png");
+        if (logo != null) Picture(Rect("Logo",header,0,-2,380,190),logo,Color.white,false).preserveAspect = true;
+        else Text("Title",header,0,-12,900,100,"별가루 아틀리에",70,Color.white,true);
         // 보유 골드(13.2): 제목 오른쪽 위의 알약 모양 칸.
         RectTransform goldPill = Panel("Gold",header,420,48,230,64,new Color(0.16f,0.12f,0.30f,1f),gold);
         Picture(Rect("Icon",goldPill,-78,0,50,50),goldIcon,Color.white,false);
@@ -309,6 +328,23 @@ public static class StardustSceneBuilder
         screen.gameObject.SetActive(false);
     }
 
+    // ---- 타이틀 화면(13.1): 화면을 누르면 레벨 맵으로 ----
+    private static void BuildTitle(StardustApp app, Transform canvas)
+    {
+        RectTransform screen = Stretch("TitleScreen",canvas); app.titleScreen = screen.gameObject;
+        // 화면 전체가 버튼입니다. 자식 그림은 입력을 받지 않습니다.
+        Sprite background = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Backgrounds/bg_title.png");
+        UnityEngine.UI.Image back = Picture(screen,background != null ? background : bgMap,Color.white,true);
+        app.titleButton = screen.gameObject.AddComponent<UnityEngine.UI.Button>(); app.titleButton.targetGraphic = back;
+        app.titleButton.transition = UnityEngine.UI.Selectable.Transition.None;
+        Sprite logo = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/ui_logo.png");
+        if (logo != null) Picture(Rect("Logo",screen,0,360,960,480),logo,Color.white,false).preserveAspect = true;
+        else Text("Title",screen,0,360,1000,160,"별가루 아틀리에",110,Color.white,true);
+        Text("Touch",screen,0,-560,900,80,"화면을 터치하세요",48,Color.white,true);
+        app.titleNotice = Text("Notice",screen,0,-680,960,70,"",34,gold,true);
+        screen.gameObject.SetActive(false);
+    }
+
     // ---- 팝업: 진입·일시정지·확인·결과·튜토리얼을 한 카드로 씁니다 ----
     private static void BuildModal(StardustApp app, Transform canvas)
     {
@@ -338,11 +374,13 @@ public static class StardustSceneBuilder
 
         app.popupBody = Text("Body",card,0,60,800,150,"",38,Color.white,false);
         // 소리 켜기/끄기 줄: 설정·일시정지 팝업에서 씁니다.
-        RectTransform soundRow = Rect("SoundRow",card,0,0,700,110); app.popupSoundRow = soundRow.gameObject;
-        app.soundBgm = Button("Bgm",soundRow,-170,0,320,92,"배경음 켜짐",panelLight,Color.white);
-        app.soundSfx = Button("Sfx",soundRow,170,0,320,92,"효과음 켜짐",panelLight,Color.white);
-        app.soundBgmText = app.soundBgm.GetComponentInChildren<TMP_Text>(); app.soundSfxText = app.soundSfx.GetComponentInChildren<TMP_Text>();
-        app.soundBgmText.fontSize = 32; app.soundSfxText.fontSize = 32;
+        RectTransform soundRow = Rect("SoundRow",card,0,0,760,200); app.popupSoundRow = soundRow.gameObject;
+        Text("BgmLabel",soundRow,-285,48,170,60,"배경음",34,Color.white,false);
+        app.bgmSlider = VolumeSlider("BgmSlider",soundRow,10,48,400);
+        app.bgmValue = Text("BgmValue",soundRow,300,48,120,60,"100",36,gold,true);
+        Text("SfxLabel",soundRow,-285,-48,170,60,"효과음",34,Color.white,false);
+        app.sfxSlider = VolumeSlider("SfxSlider",soundRow,10,-48,400);
+        app.sfxValue = Text("SfxValue",soundRow,300,-48,120,60,"100",36,gold,true);
         soundRow.gameObject.SetActive(false);
         // 결과 팝업의 획득 골드 줄(10.4): 동전 그림 + "+150".
         RectTransform goldRow = Rect("GoldRow",card,0,0,400,80); app.popupGoldRow = goldRow.gameObject;
@@ -395,12 +433,41 @@ public static class StardustSceneBuilder
         art.relic = StardustArtGenerator.Load("obstacle_relic"); art.chain = StardustArtGenerator.Load("obstacle_chain");
         art.ice1 = StardustArtGenerator.Load("ice_1"); art.ice2 = StardustArtGenerator.Load("ice_2");
         art.check = check;
+        // 설명형 튜토리얼 그림(Assets/Art/Tutorials, 600×400).
+        art.tutorialKeys = new[] { "tut_bomb", "tut_ice", "tut_prism", "tut_box", "tut_relic", "tut_square", "tut_vine", "tut_chain" };
+        art.tutorials = new Sprite[art.tutorialKeys.Length];
+        for (int i = 0; i < art.tutorialKeys.Length; i++)
+            art.tutorials[i] = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Tutorials/"+art.tutorialKeys[i]+".png");
         // 캐릭터 그림(Assets/Art/Characters). 순서는 ID 105~109입니다.
         for (int i = 0; i < 5; i++)
         {
             art.portraits[i] = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Characters/char_"+(105+i)+"_portrait.png");
             art.fullBodies[i] = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Characters/char_"+(105+i)+"_full.png");
         }
+    }
+    // 소리(Assets/Audio): 효과음 12종 WAV, 배경음 2곡 OGG.
+    private static void FillAudio(AudioService audio)
+    {
+        audio.swap = Clip("sfx_swap.wav"); audio.swapInvalid = Clip("sfx_swap_invalid.wav"); audio.match = Clip("sfx_dry_pop.wav");
+        audio.rocket = Clip("sfx_rocket.wav"); audio.bomb = Clip("sfx_bomb.wav"); audio.meteor = Clip("sfx_meteor.wav");
+        audio.prism = Clip("sfx_prism.wav"); audio.obstacle = Clip("sfx_obstacle.wav"); audio.skill = Clip("sfx_skill.wav");
+        audio.clear = Clip("sfx_clear.wav"); audio.fail = Clip("sfx_fail.wav"); audio.button = Clip("sfx_button.wav");
+        audio.bgmMap = Clip("bgm_map.ogg"); audio.bgmGame = Clip("bgm_game.ogg");
+    }
+    private static AudioClip Clip(string file) { return AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/"+file); }
+    // 효과 프리팹(Assets/VFX).
+    private static void FillVfx(VfxService vfx)
+    {
+        vfx.blockClear = Effect("vfx_block_clear"); vfx.rocketH = Effect("vfx_rocket_h"); vfx.rocketV = Effect("vfx_rocket_v");
+        vfx.bomb = Effect("vfx_bomb"); vfx.bombBig = Effect("vfx_bomb_big"); vfx.meteor = Effect("vfx_meteor");
+        vfx.prism = Effect("vfx_prism"); vfx.comboStart = Effect("vfx_combo_start"); vfx.itemCreate = Effect("vfx_item_create");
+        vfx.obstacleBreak = Effect("vfx_obstacle_break"); vfx.vineSpread = Effect("vfx_vine_spread"); vfx.skillCast = Effect("vfx_skill_cast");
+        vfx.clear = Effect("vfx_clear"); vfx.starPop = Effect("vfx_star_pop");
+    }
+    private static StardustUiVfx Effect(string name)
+    {
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/VFX/"+name+".prefab");
+        return prefab != null ? prefab.GetComponent<StardustUiVfx>() : null;
     }
     private static RectTransform Rect(string name, Transform parent, float x, float y, float width, float height)
     {
@@ -459,6 +526,26 @@ public static class StardustSceneBuilder
         TMP_Text label = Text("Label",rect,0,2,width-40,height-10,caption,40,foreground,false);
         label.fontStyle = FontStyles.Bold;
         return button;
+    }
+    // 음량 슬라이더(0~100, 정수). 100이 기본 음량이고 왼쪽으로 줄입니다.
+    private static UnityEngine.UI.Slider VolumeSlider(string name, Transform parent, float x, float y, float width)
+    {
+        RectTransform rect = Rect(name,parent,x,y,width,64);
+        Picture(rect,null,new Color(0,0,0,0),true); // 줄 전체에서 입력을 받는 투명 판
+        UnityEngine.UI.Image track = Picture(Rect("Track",rect,0,0,width,22),rounded,new Color(0.10f,0.07f,0.20f,1),false); track.type = UnityEngine.UI.Image.Type.Sliced;
+        RectTransform fillArea = Rect("FillArea",rect,0,0,width,22);
+        RectTransform fill = Rect("Fill",fillArea,0,0,0,0);
+        UnityEngine.UI.Image fillImage = Picture(fill,rounded,gold,false); fillImage.type = UnityEngine.UI.Image.Type.Sliced;
+        RectTransform handleArea = Rect("HandleArea",rect,0,0,width-56,64);
+        RectTransform handle = Rect("Handle",handleArea,0,0,56,56);
+        UnityEngine.UI.Image knob = Picture(handle,circle,Color.white,false);
+        UnityEngine.UI.Slider slider = rect.gameObject.AddComponent<UnityEngine.UI.Slider>();
+        slider.fillRect = fill; slider.handleRect = handle; slider.targetGraphic = knob;
+        slider.direction = UnityEngine.UI.Slider.Direction.LeftToRight;
+        slider.minValue = 0; slider.maxValue = 100; slider.wholeNumbers = true; slider.value = 100;
+        // 채움과 손잡이는 슬라이더가 anchor로 움직이므로 크기 여백을 0으로 둡니다.
+        fill.sizeDelta = Vector2.zero; handle.sizeDelta = new Vector2(56,0);
+        return slider;
     }
     private static UnityEngine.UI.Button IconButton(string name, Transform parent, float x, float y, float size, Sprite icon, Color background)
     {

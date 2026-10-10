@@ -23,7 +23,8 @@ namespace StardustAtelier.Meta
     }
     [Serializable] public sealed class LevelSave { public bool cleared; public int bestStars, consecutiveFails, attempts; }
     [Serializable] public sealed class CharacterSave { public int level = 1; }
-    [Serializable] public sealed class SettingsSave { public bool bgm = true, sfx = true; }
+    // bgmVolume·sfxVolume: 0~100. 100이 기본 음량이고 줄이기만 할 수 있습니다. bgm·sfx는 음량이 0보다 큰지입니다.
+    [Serializable] public sealed class SettingsSave { public bool bgm = true, sfx = true; public int bgmVolume = 100, sfxVolume = 100; }
 
     public static class SaveService
     {
@@ -73,6 +74,11 @@ namespace StardustAtelier.Meta
             if (data.itemsSeen == null) data.itemsSeen = new List<string>();
             if (data.settings == null) data.settings = new SettingsSave();
             if (data.gold < 0) data.gold = 0;
+            data.settings.bgmVolume = Math.Max(0,Math.Min(100,data.settings.bgmVolume));
+            data.settings.sfxVolume = Math.Max(0,Math.Min(100,data.settings.sfxVolume));
+            // 예전 저장의 끄기 설정은 음량 0으로 옮깁니다.
+            if (!data.settings.bgm) data.settings.bgmVolume = 0;
+            if (!data.settings.sfx) data.settings.sfxVolume = 0;
             foreach (LevelSave level in data.levels.Values)
             {
                 level.bestStars = Math.Max(0,Math.Min(3,level.bestStars));

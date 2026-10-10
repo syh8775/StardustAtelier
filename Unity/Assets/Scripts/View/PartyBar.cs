@@ -55,8 +55,17 @@ namespace StardustAtelier.View
             {
                 bool member = i < session.Party.Length && session.Party[i] != null;
                 if (member) slots[i].gauge.fillAmount = Mathf.Clamp01((float)session.Gauge[i]/session.Required(i));
-                slots[i].glow.SetActive(member && session.Outcome == SessionOutcome.Idle && session.GetSkillState(i) == SkillState.Ready);
+                bool ready = member && session.Outcome == SessionOutcome.Idle && session.GetSkillState(i) == SkillState.Ready;
+                slots[i].glow.SetActive(ready);
+                // 게이지가 가득 찬 초상화 둘레의 반복 효과.
+                if (slots[i].fullVfx != null && slots[i].fullVfx.activeSelf != ready) slots[i].fullVfx.SetActive(ready);
             }
+        }
+        // 슬롯 캐릭터의 속성 색. 스킬 효과 색에 씁니다.
+        public Color SlotColor(int slot)
+        {
+            if (session == null || slot < 0 || slot >= session.Party.Length || session.Party[slot] == null) return Color.white;
+            return CellView.ColorFor(BoardGenerator.ParseColor(session.Party[slot].character.attr[0]));
         }
         public void Highlight(int slot)
         {

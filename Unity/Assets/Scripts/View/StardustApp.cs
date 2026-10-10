@@ -242,8 +242,37 @@ namespace StardustAtelier.View
         // 설정 팝업: 배경음·효과음 켜기/끄기와 버전 표시.
         public void OpenSettings()
         {
-            Popup("설정","버전 "+Application.version,"닫기",() => modal.SetActive(false),null,null,null,null);
+            // 개발용 도구(DevTools)가 켜져 있으면 [진행 초기화] 버튼을 함께 보여줍니다.
+            Popup("설정","버전 "+Application.version,"닫기",() => modal.SetActive(false),
+                DevTools ? "진행 초기화 (테스트)" : null,ConfirmReset,null,null);
             popupSoundRow.SetActive(true); RefreshSound(); LayoutPopup();
+        }
+
+        // ---- 테스트용 도구(기획서의 디버그 메뉴 중 일부) ----
+        // Editor와 개발 빌드에서만 켜집니다. 출시 빌드에는 버튼도 키도 나오지 않습니다.
+        public static bool DevTools { get { return Application.isEditor || Debug.isDebugBuild; } }
+        private void ConfirmReset()
+        {
+            Popup("진행을 초기화할까요?","레벨·캐릭터·골드·튜토리얼 기록이\n모두 처음 상태로 돌아가요","초기화",ResetProgress,"취소",() => modal.SetActive(false),null,null);
+        }
+        // 저장을 새 것으로 덮어쓰고 처음 실행한 상태로 맵을 엽니다.
+        public void ResetProgress()
+        {
+            if (!DevTools) return;
+            SaveService.Save(SaveDirectory,new SaveData());
+            LoadProgress(); pendingJoin = 0; current = 0; soundDirty = false;
+            ApplyVolume(); ShowMap();
+        }
+        // 레벨 바로 가기: 잠금과 관계없이 지금 레벨에서 step만큼 떨어진 레벨의 진입 팝업을 엽니다.
+        // 잠금 해제는 이번 실행 동안만 유지하고 저장하지 않습니다.
+        public void JumpLevel(int step)
+        {
+            if (!DevTools || titleScreen.activeSelf) return;
+            int index = Mathf.Clamp(current+step,0,levels.Count-1);
+            StopAllCoroutines(); Busy = false; Intro = false; PreviewSlot = -1;
+            if (guide != null) guide.Hide();
+            current = index; unlocked = Math.Max(unlocked,index);
+            ShowMap(); OpenEntry(index);
         }
         // 슬라이더를 움직이면 소리에 바로 반영하고, 손을 뗀 뒤 한 번 저장합니다(끄는 동안 매 프레임 쓰지 않도록).
         public void SetVolume(bool bgm, int value)
@@ -477,6 +506,14 @@ namespace StardustAtelier.View
             if (Config == null) return;
             // 음량을 바꾼 뒤 손을 떼면 저장합니다.
             if (soundDirty && (Pointer.current == null || !Pointer.current.press.isPressed)) { soundDirty = false; WriteProgress(); }
+            // 테스트용 키: PageDown = 다음 레벨, PageUp = 이전 레벨, Home = 레벨 1, End = 마지막 레벨.
+            if (DevTools && Keyboard.current != null)
+            {
+                if (Keyboard.current.pageDownKey.wasPressedThisFrame) JumpLevel(1);
+                else if (Keyboard.current.pageUpKey.wasPressedThisFrame) JumpLevel(-1);
+                else if (Keyboard.current.homeKey.wasPressedThisFrame) JumpLevel(-levels.Count);
+                else if (Keyboard.current.endKey.wasPressedThisFrame) JumpLevel(levels.Count);
+            }
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 // 뒤로 가기(13.3): 팝업이 있으면 닫고, 스킬 미리보기면 취소, 인게임 대기·마지막 기회면 일시정지를 엽니다.

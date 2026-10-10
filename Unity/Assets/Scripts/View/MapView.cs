@@ -13,11 +13,15 @@ namespace StardustAtelier.View
         public MapNode[] nodes;
         // 상단 보유 골드(13.2).
         public TMP_Text goldText;
+        // 하단 [캐릭터] [설정] 버튼(13.2). 스크롤과 상관없이 화면 아래에 고정합니다.
+        public UnityEngine.UI.Button charactersButton, settingsButton;
         private StardustApp app;
 
         public void Bind(StardustApp owner)
         {
             app = owner;
+            charactersButton.onClick.AddListener(app.ShowCharacters);
+            settingsButton.onClick.AddListener(app.OpenSettings);
             for (int i = 0; i < nodes.Length; i++)
             {
                 int index = i;

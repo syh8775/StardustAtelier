@@ -49,6 +49,7 @@ public static class StardustSceneBuilder
 
         BuildGame(app,input,art,canvasObject.transform);
         BuildMap(app,canvasObject.transform);
+        BuildCharacters(app,art,canvasObject.transform);
         BuildModal(app,canvasObject.transform);
 
         GameObject eventObject = new GameObject("EventSystem",typeof(EventSystem),typeof(InputSystemUIInputModule));
@@ -208,7 +209,8 @@ public static class StardustSceneBuilder
         MapView map = screen.gameObject.AddComponent<MapView>(); app.map = map;
         Picture(Stretch("Background",screen),bgMap,Color.white,false);
 
-        RectTransform viewport = Rect("Viewport",screen,0,-90,1080,1740);
+        // 스크롤 영역은 상단 제목과 하단 버튼 줄 사이입니다.
+        RectTransform viewport = Rect("Viewport",screen,0,-10,1080,1560);
         Picture(viewport,null,new Color(0,0,0,0),true);
         viewport.gameObject.AddComponent<UnityEngine.UI.RectMask2D>();
         RectTransform content = Rect("Content",viewport,0,0,1080,NodeBase*2+NodeGap*29);
@@ -238,6 +240,10 @@ public static class StardustSceneBuilder
         RectTransform goldPill = Panel("Gold",header,420,48,230,64,new Color(0.16f,0.12f,0.30f,1f),gold);
         Picture(Rect("Icon",goldPill,-78,0,50,50),goldIcon,Color.white,false);
         map.goldText = Text("Value",goldPill,22,0,150,56,"0",34,Color.white,true);
+        // 하단 [캐릭터] [설정] 버튼(13.2). 스크롤 위에 고정합니다.
+        RectTransform bottom = Panel("BottomBar",screen,0,-872,1120,180,new Color(0.10f,0.07f,0.22f,1f),gold);
+        map.charactersButton = Button("Characters",bottom,-250,6,440,104,"캐릭터",gold,ink);
+        map.settingsButton = Button("Settings",bottom,250,6,440,104,"설정",panelLight,Color.white);
         screen.gameObject.SetActive(false);
     }
     private static Vector2 NodePosition(int index)
@@ -260,6 +266,47 @@ public static class StardustSceneBuilder
         for (int s = 0; s < 3; s++)
             node.stars[s] = Picture(Rect("Star"+s,root,(s-1)*58,s == 1 ? -106 : -96,s == 1 ? 64 : 54,s == 1 ? 64 : 54),star,Color.white,false);
         return node;
+    }
+
+    // ---- 캐릭터 화면: 보유 캐릭터 카드 → 상세와 레벨업(13.2, 12.6) ----
+    private static void BuildCharacters(StardustApp app, CellArt art, Transform canvas)
+    {
+        RectTransform screen = Stretch("CharacterScreen",canvas);
+        CharacterView view = screen.gameObject.AddComponent<CharacterView>(); app.characters = view;
+        Picture(Stretch("Background",screen),bgMap,Color.white,false);
+        Picture(Stretch("Shade",screen),null,new Color(0.05f,0.03f,0.12f,0.55f),false);
+
+        RectTransform header = Panel("Header",screen,0,862,1120,200,new Color(0.10f,0.07f,0.22f,1f),gold);
+        Text("Title",header,0,-6,600,100,"캐릭터",70,Color.white,true);
+        view.back = Button("Back",header,-400,-6,200,92,"맵으로",panelLight,Color.white);
+        view.back.GetComponentInChildren<TMP_Text>().fontSize = 32;
+        RectTransform goldPill = Panel("Gold",header,400,-6,230,64,new Color(0.16f,0.12f,0.30f,1f),gold);
+        Picture(Rect("Icon",goldPill,-78,0,50,50),goldIcon,Color.white,false);
+        view.goldText = Text("Value",goldPill,22,0,150,56,"0",34,Color.white,true);
+
+        // 보유 캐릭터 카드(최대 5명). 고른 카드는 흰 테두리로 표시합니다.
+        RectTransform cardRow = Rect("Cards",screen,0,640,1000,200);
+        view.cards = new PartySlotView[5];
+        for (int i = 0; i < 5; i++) view.cards[i] = CreatePartySlot(cardRow,"Card"+i,(i-2)*190,0,150,false);
+
+        RectTransform detail = Rect("Detail",screen,0,-130,1040,1240); view.detail = detail.gameObject;
+        // 전신 일러스트(768×1152)를 왼쪽에, 정보를 오른쪽에 둡니다.
+        Picture(Rect("Glow",detail,-250,90,760,900),glow,new Color(0.75f,0.60f,1f,0.35f),false);
+        view.fullBody = Picture(Rect("FullBody",detail,-250,90,500,750),art.fullBodies[0],Color.white,false); view.fullBody.preserveAspect = true;
+        RectTransform info = Panel("Info",detail,270,110,470,700,new Color(0.17f,0.13f,0.32f,1f),gold);
+        view.nameText = Text("Name",info,0,280,430,90,"세이지",64,Color.white,true);
+        view.attrIcon = Picture(Rect("AttrIcon",info,-110,195,56,56),art.gems[2],Color.white,false); view.attrIcon.preserveAspect = true;
+        view.attrText = Text("Attr",info,30,195,220,56,"숲 속성",34,lavender,false);
+        view.levelText = Text("Level",info,0,105,430,80,"Lv 1",56,gold,true);
+        view.gaugeText = Text("Gauge",info,0,30,430,56,"필요 게이지 15 → 15",32,Color.white,false);
+        Picture(Rect("Line",info,0,-22,400,3),null,new Color(1f,0.80f,0.36f,0.5f),false);
+        view.skillName = Text("SkillName",info,0,-80,430,60,"숲의 가지치기",38,gold,true);
+        view.skillDesc = Text("SkillDesc",info,0,-195,410,160,"",30,Color.white,false);
+        view.levelUp = Button("LevelUp",detail,0,-400,720,120,"레벨업",gold,ink);
+        view.levelUpText = view.levelUp.GetComponentInChildren<TMP_Text>();
+
+        view.emptyNote = Text("Empty",screen,0,0,900,200,"아직 동료가 없어요.\n레벨 1을 클리어하면 첫 동료가 합류해요.",40,lavender,false).gameObject;
+        screen.gameObject.SetActive(false);
     }
 
     // ---- 팝업: 진입·일시정지·확인·결과·튜토리얼을 한 카드로 씁니다 ----
@@ -290,6 +337,13 @@ public static class StardustSceneBuilder
         app.popupPictureImage.preserveAspect = true;
 
         app.popupBody = Text("Body",card,0,60,800,150,"",38,Color.white,false);
+        // 소리 켜기/끄기 줄: 설정·일시정지 팝업에서 씁니다.
+        RectTransform soundRow = Rect("SoundRow",card,0,0,700,110); app.popupSoundRow = soundRow.gameObject;
+        app.soundBgm = Button("Bgm",soundRow,-170,0,320,92,"배경음 켜짐",panelLight,Color.white);
+        app.soundSfx = Button("Sfx",soundRow,170,0,320,92,"효과음 켜짐",panelLight,Color.white);
+        app.soundBgmText = app.soundBgm.GetComponentInChildren<TMP_Text>(); app.soundSfxText = app.soundSfx.GetComponentInChildren<TMP_Text>();
+        app.soundBgmText.fontSize = 32; app.soundSfxText.fontSize = 32;
+        soundRow.gameObject.SetActive(false);
         // 결과 팝업의 획득 골드 줄(10.4): 동전 그림 + "+150".
         RectTransform goldRow = Rect("GoldRow",card,0,0,400,80); app.popupGoldRow = goldRow.gameObject;
         Picture(Rect("Icon",goldRow,-70,0,66,66),goldIcon,Color.white,false);

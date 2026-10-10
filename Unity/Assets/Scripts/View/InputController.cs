@@ -16,6 +16,8 @@ namespace StardustAtelier.View
         {
             accepted = false; sent = false;
             if (app.Intro) { app.SkipIntro(); return; }
+            // 스킬 안내 중에는 보드를 눌러도 미리보기를 취소하거나 교환하지 않습니다(13.3).
+            if (app.GuideBlocksBoard) return;
             // 스킬 미리보기 중 보드의 다른 곳을 누르면 취소합니다(12.4).
             if (app.PreviewSlot >= 0) { app.CancelSkill(); return; }
             if (!app.CanInput) return;

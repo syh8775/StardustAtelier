@@ -197,6 +197,23 @@ namespace StardustAtelier.PlayTests
             Assert.That(app.popupTitle.text,Is.EqualTo("아쉬워요!"));
             Assert.That(app.popupBody.text,Is.EqualTo("더 이동할 수 있는 블록이 없어요"));
         }
+        // 뒤로 가기(13.3): 레벨 맵에서는 종료 확인을 띄우고, 다시 누르거나 [취소]를 누르면 닫습니다.
+        [UnityTest] public IEnumerator BackOnMapAsksBeforeQuitting()
+        {
+            app.ShowMap(); yield return null;
+            app.Back(); yield return null;
+            Assert.That(app.modal.activeSelf,Is.True);
+            Assert.That(app.popupTitle.text,Is.EqualTo("게임을 종료할까요?"));
+            Assert.That(app.primaryText.text,Is.EqualTo("종료")); Assert.That(app.secondaryText.text,Is.EqualTo("취소"));
+            Click(app.secondary); yield return null;
+            Assert.That(app.modal.activeSelf,Is.False); Assert.That(app.map.gameObject.activeSelf,Is.True);
+            app.Back(); yield return null; Assert.That(app.modal.activeSelf,Is.True);
+            app.Back(); yield return null; Assert.That(app.modal.activeSelf,Is.False);
+            // 인게임에서는 종료 확인이 아니라 일시정지를 엽니다.
+            app.StartLevel(0,63); app.SkipIntro(); yield return Ready();
+            app.Back(); yield return null;
+            Assert.That(app.popupTitle.text,Is.EqualTo("일시정지"));
+        }
         private IEnumerator Ready()
         {
             float deadline = Time.realtimeSinceStartup+12;

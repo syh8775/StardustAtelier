@@ -142,6 +142,13 @@ public static class StardustSceneBuilder
         hud.skillCancel = Button("Cancel",skill,340,-52,240,72,"취소",panelLight,Color.white);
         skill.gameObject.SetActive(false);
 
+        // 안내형 튜토리얼의 손가락(13.3): 보드·파티·스킬 패널 위에 그립니다. 기준점이 손끝이고 터치는 막지 않습니다.
+        app.guide = screen.gameObject.AddComponent<TutorialGuide>();
+        RectTransform finger = Rect("GuideFinger",screen,0,0,150,150);
+        finger.pivot = new Vector2(0.5f,0.93f);
+        Picture(finger,StardustArtGenerator.Load("ui_finger"),Color.white,false);
+        app.guide.finger = finger; finger.gameObject.SetActive(false);
+
         hud.combo = Text("Combo",screen,0,120,900,160,"2 연쇄!",110,gold,true);
         hud.combo.gameObject.SetActive(false);
         BuildIntroBanner(app,art,screen);
@@ -214,6 +221,8 @@ public static class StardustSceneBuilder
         RectTransform tile = Inset("Tile",cell,5); view.tile = tile;
         view.gem = Picture(Stretch("Gem",tile),art.gems[0],Color.white,false); view.gem.preserveAspect = true;
         view.overlay = Picture(Inset("Overlay",tile,22),art.rocketH,Color.white,false); view.overlay.preserveAspect = true;
+        // 얼음 칸의 블록 위에 덮는 반투명 얼음. 칸에 붙어 있어 블록이 떨어져도 따라 움직이지 않습니다.
+        view.frost = Picture(Inset("Frost",cell,6),art.ice1,new Color(1,1,1,0.4f),false); view.frost.gameObject.SetActive(false);
         view.chain = Picture(Inset("Chain",cell,0),art.chain,Color.white,false); view.chain.gameObject.SetActive(false);
         return view;
     }

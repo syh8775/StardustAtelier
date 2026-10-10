@@ -41,6 +41,7 @@ public static class StardustArtGenerator
         Make("ui_ring",128,p => p.Fill((x,y) => Mathf.Abs(Sdf.Circle(x,y,0.88f))-0.08f,Color.white));
         Make("ui_glow",128,UiGlow);
         Make("ui_gold",128,UiGold);
+        Make("ui_finger",256,UiFinger);
         MakeSized("bg_game",720,1280,p => Background(p,11,new Color(0.09f,0.06f,0.20f),new Color(0.26f,0.14f,0.38f)));
         MakeSized("bg_map",720,1280,p => Background(p,23,new Color(0.07f,0.08f,0.22f),new Color(0.30f,0.16f,0.40f)));
         AssetDatabase.Refresh();
@@ -252,6 +253,16 @@ public static class StardustArtGenerator
             float h = 1-((x+0.18f)*(x+0.18f)/(0.22f*0.22f)+(y-0.30f)*(y-0.30f)/(0.10f*0.10f));
             return h > 0 ? Color.Lerp(body,Color.white,0.75f*h) : body;
         });
+    }
+    // 안내 손가락: 위를 가리키는 검지와 손등. 손끝이 그림 위쪽 가운데입니다. 최종 그림으로 바꿀 자리입니다.
+    private static void UiFinger(Paint p)
+    {
+        Func<float,float,float> hand = (x,y) => Sdf.SmoothUnion(
+            Sdf.Segment(x,y,0,0.72f,0,-0.10f,0.17f),Sdf.Box(x-0.06f,y+0.46f,0.40f,0.34f,0.22f),0.10f);
+        p.Fill((x,y) => hand(x,y)-0.07f,Ink);
+        p.Shade(hand,(x,y,d) => Color.Lerp(new Color(0.93f,0.90f,1f),Color.white,Mathf.Clamp01((y+1)*0.5f)));
+        // 손가락 마디 선.
+        p.Fill((x,y) => Sdf.Segment(x,y,-0.10f,0.02f,0.10f,0.02f,0.018f),new Color(0.55f,0.50f,0.70f));
     }
     private static void UiLock(Paint p)
     {

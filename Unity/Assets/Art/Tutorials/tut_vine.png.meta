@@ -1,0 +1,832 @@
+fileFormatVersion: 2
+guid: cfefff109bea64d4898ff66a2596266c
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -462241014418969960
+    second: tut_vine_0
+  - first:
+      213: 4210318362449949696
+    second: tut_vine_1
+  - first:
+      213: 279646250825502022
+    second: tut_vine_2
+  - first:
+      213: -8875317163969013244
+    second: tut_vine_3
+  - first:
+      213: 4731035873391630777
+    second: tut_vine_4
+  - first:
+      213: 3896421804372254945
+    second: tut_vine_5
+  - first:
+      213: -6106014357079799204
+    second: tut_vine_6
+  - first:
+      213: 5594465413723170345
+    second: tut_vine_7
+  - first:
+      213: 2371917469499213954
+    second: tut_vine_8
+  - first:
+      213: 1300956571238629167
+    second: tut_vine_9
+  - first:
+      213: 5576907691075075328
+    second: tut_vine_10
+  - first:
+      213: 4791701550596333275
+    second: tut_vine_11
+  - first:
+      213: 1744352223122498414
+    second: tut_vine_12
+  - first:
+      213: -3485379106471197451
+    second: tut_vine_13
+  - first:
+      213: -7390142081317191970
+    second: tut_vine_14
+  - first:
+      213: 8024067452643852460
+    second: tut_vine_15
+  - first:
+      213: -1947063438380001894
+    second: tut_vine_16
+  - first:
+      213: -3068378749751975988
+    second: tut_vine_17
+  - first:
+      213: 3966633197664630583
+    second: tut_vine_18
+  - first:
+      213: -6536522316543511181
+    second: tut_vine_19
+  - first:
+      213: 4925811909657982419
+    second: tut_vine_20
+  - first:
+      213: -5952835297679328447
+    second: tut_vine_21
+  - first:
+      213: -854421036917665699
+    second: tut_vine_22
+  - first:
+      213: -8178014987053667036
+    second: tut_vine_23
+  - first:
+      213: -7744679823612855276
+    second: tut_vine_24
+  - first:
+      213: 2032007602664938897
+    second: tut_vine_25
+  - first:
+      213: -8173544281397274279
+    second: tut_vine_26
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: tut_vine_0
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 387
+        width: 12
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89ae0f61f3ac599f0800000000000000
+      internalID: -462241014418969960
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_1
+      rect:
+        serializedVersion: 2
+        x: 141
+        y: 382
+        width: 25
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00432215e3e0e6a30800000000000000
+      internalID: 4210318362449949696
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_2
+      rect:
+        serializedVersion: 2
+        x: 177
+        y: 379
+        width: 50
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64d493398c081e300800000000000000
+      internalID: 279646250825502022
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_3
+      rect:
+        serializedVersion: 2
+        x: 237
+        y: 372
+        width: 65
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40a13b4101a84d480800000000000000
+      internalID: -8875317163969013244
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_4
+      rect:
+        serializedVersion: 2
+        x: 324
+        y: 366
+        width: 31
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b9532d8f0408a140800000000000000
+      internalID: 4731035873391630777
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_5
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 390
+        width: 14
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e0e1b8acfed21630800000000000000
+      internalID: 3896421804372254945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_6
+      rect:
+        serializedVersion: 2
+        x: 395
+        y: 382
+        width: 42
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5ac2d41b44134ba0800000000000000
+      internalID: -6106014357079799204
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_7
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 386
+        width: 19
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 926ad2d27a883ad40800000000000000
+      internalID: 5594465413723170345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_8
+      rect:
+        serializedVersion: 2
+        x: 502
+        y: 379
+        width: 28
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2884b0e1f5ebae020800000000000000
+      internalID: 2371917469499213954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_9
+      rect:
+        serializedVersion: 2
+        x: 30
+        y: 7
+        width: 548
+        height: 361
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2f73e8db1ded0210800000000000000
+      internalID: 1300956571238629167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_10
+      rect:
+        serializedVersion: 2
+        x: 345
+        y: 355
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00d7caf4ff7256d40800000000000000
+      internalID: 5576907691075075328
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_11
+      rect:
+        serializedVersion: 2
+        x: 387
+        y: 357
+        width: 22
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bde9bf83c2b8f7240800000000000000
+      internalID: 4791701550596333275
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_12
+      rect:
+        serializedVersion: 2
+        x: 387
+        y: 355
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e63216eda1f253810800000000000000
+      internalID: 1744352223122498414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_13
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 361
+        width: 12
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f447334b2271afc0800000000000000
+      internalID: -3485379106471197451
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_14
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 354
+        width: 11
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ede3c638ee0f07990800000000000000
+      internalID: -7390142081317191970
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_15
+      rect:
+        serializedVersion: 2
+        x: 437
+        y: 355
+        width: 39
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca04c98b5d63b5f60800000000000000
+      internalID: 8024067452643852460
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_16
+      rect:
+        serializedVersion: 2
+        x: 487
+        y: 357
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9595386e14aaf4e0800000000000000
+      internalID: -1947063438380001894
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_17
+      rect:
+        serializedVersion: 2
+        x: 530
+        y: 351
+        width: 18
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ccf1da8b8cdea65d0800000000000000
+      internalID: -3068378749751975988
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_18
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 362
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 737721d80ef4c0730800000000000000
+      internalID: 3966633197664630583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_19
+      rect:
+        serializedVersion: 2
+        x: 543
+        y: 348
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 375b208c59b9945a0800000000000000
+      internalID: -6536522316543511181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_20
+      rect:
+        serializedVersion: 2
+        x: 189
+        y: 39
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d57d8175dffb5440800000000000000
+      internalID: 4925811909657982419
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_21
+      rect:
+        serializedVersion: 2
+        x: 295
+        y: 32
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14bba6316d7436da0800000000000000
+      internalID: -5952835297679328447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_22
+      rect:
+        serializedVersion: 2
+        x: 445
+        y: 26
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d50d6e5089c7424f0800000000000000
+      internalID: -854421036917665699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_23
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 32
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42d68d0c2bad18e80800000000000000
+      internalID: -8178014987053667036
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_24
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 29
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41cbb66cbbe558490800000000000000
+      internalID: -7744679823612855276
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_25
+      rect:
+        serializedVersion: 2
+        x: 433
+        y: 24
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19d9cb90624233c10800000000000000
+      internalID: 2032007602664938897
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tut_vine_26
+      rect:
+        serializedVersion: 2
+        x: 230
+        y: 7
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 959d36708ccb19e80800000000000000
+      internalID: -8173544281397274279
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      tut_vine_0: -462241014418969960
+      tut_vine_1: 4210318362449949696
+      tut_vine_10: 5576907691075075328
+      tut_vine_11: 4791701550596333275
+      tut_vine_12: 1744352223122498414
+      tut_vine_13: -3485379106471197451
+      tut_vine_14: -7390142081317191970
+      tut_vine_15: 8024067452643852460
+      tut_vine_16: -1947063438380001894
+      tut_vine_17: -3068378749751975988
+      tut_vine_18: 3966633197664630583
+      tut_vine_19: -6536522316543511181
+      tut_vine_2: 279646250825502022
+      tut_vine_20: 4925811909657982419
+      tut_vine_21: -5952835297679328447
+      tut_vine_22: -854421036917665699
+      tut_vine_23: -8178014987053667036
+      tut_vine_24: -7744679823612855276
+      tut_vine_25: 2032007602664938897
+      tut_vine_26: -8173544281397274279
+      tut_vine_3: -8875317163969013244
+      tut_vine_4: 4731035873391630777
+      tut_vine_5: 3896421804372254945
+      tut_vine_6: -6106014357079799204
+      tut_vine_7: 5594465413723170345
+      tut_vine_8: 2371917469499213954
+      tut_vine_9: 1300956571238629167
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

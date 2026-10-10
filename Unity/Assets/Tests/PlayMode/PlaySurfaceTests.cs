@@ -185,6 +185,18 @@ namespace StardustAtelier.PlayTests
             // 초기화 뒤에는 잠금도 처음 상태입니다: 레벨 2 진입 팝업이 열리지 않습니다.
             app.OpenEntry(1); Assert.That(app.modal.activeSelf,Is.False);
         }
+        // 둘 수 있는 수가 없어 끝난 판은 결과 창에 그 이유를 표시합니다(9.3).
+        [UnityTest] public IEnumerator NoMovesFailShowsItsOwnMessage()
+        {
+            foreach (CellPosition p in app.Session.Board.Positions()) app.Session.Board[p].ice = 2;
+            CellPosition rocket = new CellPosition(0,0); PlaceSpecial(rocket,OccupantKind.Rocket);
+            Tap(rocket); yield return Ready();
+            float waited = 0;
+            while (!app.modal.activeSelf && waited < 5f) { waited += Time.unscaledDeltaTime; yield return null; }
+            Assert.That(app.Session.Outcome,Is.EqualTo(SessionOutcome.Fail));
+            Assert.That(app.popupTitle.text,Is.EqualTo("아쉬워요!"));
+            Assert.That(app.popupBody.text,Is.EqualTo("더 이동할 수 있는 블록이 없어요"));
+        }
         private IEnumerator Ready()
         {
             float deadline = Time.realtimeSinceStartup+12;

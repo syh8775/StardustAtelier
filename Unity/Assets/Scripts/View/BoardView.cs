@@ -27,6 +27,8 @@ namespace StardustAtelier.View
                 if (!active) continue;
                 CellPosition p = new CellPosition(i/board.Width,i%board.Width);
                 cells[i].Position = p; cells[i].input = input; cells[i].art = art;
+                // 이전 판의 스킬 미리보기·튜토리얼 안내로 어두워진 칸이 남지 않게 되돌립니다.
+                cells[i].SetDim(false);
                 RectTransform rect = (RectTransform)cells[i].transform;
                 rect.anchoredPosition = Local(p); rect.sizeDelta = Vector2.one*(CellSize-4);
                 // 바닥은 별도 층(FloorLayer)에 있어 떨어지는 블록을 가리지 않습니다. 위치만 같은 칸에 맞춥니다.

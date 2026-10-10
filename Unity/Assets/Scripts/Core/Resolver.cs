@@ -188,9 +188,13 @@ namespace StardustAtelier.Core
         }
         private CellPosition? PickMeteor(List<CellPosition> excluded)
         {
-            for (int i = 0; i < goals.Count; i++)
+            // 가장 많이 남은 목표부터 노립니다(2026-10-10 변경). 남은 수가 같으면 레벨 데이터에서 앞선 목표가 먼저입니다.
+            // 그 목표에 해당하는 칸이 보드에 없으면 다음으로 많이 남은 목표로 넘어갑니다.
+            List<int> order = new List<int>();
+            for (int i = 0; i < goals.Count; i++) if (goals.Remaining(i) > 0) order.Add(i);
+            order.Sort((x,y) => goals.Remaining(x) != goals.Remaining(y) ? goals.Remaining(y).CompareTo(goals.Remaining(x)) : x.CompareTo(y));
+            foreach (int i in order)
             {
-                if (goals.Remaining(i) == 0) continue;
                 GoalData goal = goals.Goal(i);
                 List<CellPosition> candidates = new List<CellPosition>();
                 foreach (CellPosition p in board.Positions())

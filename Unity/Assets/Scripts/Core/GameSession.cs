@@ -51,10 +51,13 @@ namespace StardustAtelier.Core
             get
             {
                 if (Outcome != SessionOutcome.Clear) return 0;
-                if (MovesLeft >= Math.Ceiling(Level.moves*config.rules.star3MovesRatio)) return 3;
-                return MovesLeft >= Math.Ceiling(Level.moves*config.rules.star2MovesRatio) ? 2 : 1;
+                if (MovesLeft >= StarMoves(Level.moves,config.rules.star3MovesRatio)) return 3;
+                return MovesLeft >= StarMoves(Level.moves,config.rules.star2MovesRatio) ? 2 : 1;
             }
         }
+        // 별을 받으려면 남겨야 하는 이동 수(올림). 진입 팝업의 별 기준 안내와 같은 계산을 씁니다.
+        // 0.2f 같은 비율은 float 오차로 20×0.2가 4.0000001이 되어 5로 올림되므로, 아주 작은 값을 빼고 올립니다.
+        public static int StarMoves(int moves, float ratio) { return (int)Math.Ceiling(moves*(double)ratio-0.0001); }
         public List<GameEvent> Swap(CellPosition a, CellPosition b)
         {
             List<GameEvent> events = new List<GameEvent>();

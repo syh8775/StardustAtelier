@@ -8,7 +8,7 @@ namespace StardustAtelier.View
     {
         public UnityEngine.UI.Button button;
         public UnityEngine.UI.Image portrait, gauge, gaugeBack;
-        public GameObject glow, selected, lockGroup, empty;
+        public GameObject glow, selected, lockGroup, empty, fullVfx;
         // 초상화를 보이거나 숨기고, 빈 슬롯이면 "+"를 보입니다.
         public void SetPortrait(Sprite sprite)
         {

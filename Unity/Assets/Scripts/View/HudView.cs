@@ -21,6 +21,9 @@ namespace StardustAtelier.View
         public CellArt art;
         // 하단 파티 바, 스킬 미리보기 패널(12.4), 마지막 기회의 [종료] 버튼(10.3).
         public PartyBar party;
+        // 소리와 효과. EventPlayer가 이벤트에 맞춰 씁니다.
+        public AudioService audioService;
+        public VfxService vfx;
         public GameObject skillPanel;
         public TMP_Text skillName, skillDesc;
         public UnityEngine.UI.Button skillUse, skillCancel, endButton;

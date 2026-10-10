@@ -16,6 +16,12 @@ namespace StardustAtelier.View
         public HudView hud;
         public MapView map;
         public CharacterView characters;
+        public AudioService audioService;
+        public VfxService vfx;
+        // 타이틀 화면(13.1): 화면을 누르면 레벨 맵으로 갑니다. 저장을 읽지 못했으면 여기서 알립니다(14.3).
+        public GameObject titleScreen;
+        public UnityEngine.UI.Button titleButton;
+        public TMP_Text titleNotice;
         public CellArt art;
         // 화면: 레벨 맵과 인게임. 나머지는 팝업입니다(기획서 13.1).
         public GameObject gameScreen;
@@ -23,10 +29,11 @@ namespace StardustAtelier.View
         public GameObject modal, popupStarRow, popupGoalRow, popupPicture, popupPartyRow, popupGoldRow;
         // 결과 팝업의 획득 골드(10.4).
         public TMP_Text popupGoldText;
-        // 소리 켜기/끄기 줄: 설정 팝업과 일시정지 팝업이 함께 씁니다(13.2). 바꾸면 즉시 저장합니다.
+        // 소리 음량 줄: 설정 팝업과 일시정지 팝업이 함께 씁니다(13.2). 0~100, 100이 기본 음량입니다. 바꾸면 저장합니다.
         public GameObject popupSoundRow;
-        public UnityEngine.UI.Button soundBgm, soundSfx;
-        public TMP_Text soundBgmText, soundSfxText;
+        public UnityEngine.UI.Slider bgmSlider, sfxSlider;
+        public TMP_Text bgmValue, sfxValue;
+        private bool soundDirty;
         public RectTransform popupCard;
         public UnityEngine.UI.Image popupPictureImage;
         public UnityEngine.UI.Image[] popupStars, popupGoalImages, popupRecommended;
@@ -108,17 +115,28 @@ namespace StardustAtelier.View
             hud.skillCancel.onClick.AddListener(CancelSkill);
             hud.endButton.onClick.AddListener(EndLastChance);
             hud.party.Bind(this); characters.Bind(this);
-            soundBgm.onClick.AddListener(() => ToggleSound(true));
-            soundSfx.onClick.AddListener(() => ToggleSound(false));
+            bgmSlider.onValueChanged.AddListener(value => SetVolume(true,(int)value));
+            sfxSlider.onValueChanged.AddListener(value => SetVolume(false,(int)value));
             introSkip.onClick.AddListener(SkipIntro);
             for (int i = 0; i < popupPartySlots.Length; i++) { int slot = i; popupPartySlots[i].button.onClick.AddListener(() => OpenPicker(slot)); }
             for (int i = 0; i < pickerButtons.Length; i++) { int index = i; pickerButtons[i].onClick.AddListener(() => Pick(index)); }
             pickerClear.onClick.AddListener(() => Pick(-1));
             pickerClose.onClick.AddListener(() => picker.SetActive(false));
             map.Bind(this);
-            ShowMap();
-            // 저장 파일을 읽지 못했으면 새로 시작했다고 한 번 알립니다(14.3. 타이틀 화면이 생기면 그쪽으로 옮깁니다).
-            if (SaveRecovered) Popup("알림","저장 파일을 읽지 못해 새로 시작해요","확인",() => modal.SetActive(false),null,null,null,null);
+            titleButton.onClick.AddListener(ShowMap);
+            ApplyVolume();
+            // 모든 버튼에 누름 소리를 붙입니다(13.5).
+            foreach (UnityEngine.UI.Button button in FindObjectsByType<UnityEngine.UI.Button>(FindObjectsInactive.Include,FindObjectsSortMode.None))
+                button.onClick.AddListener(() => audioService.Play(audioService.button));
+            map.Refresh();
+            ShowTitle();
+        }
+        private void ShowTitle()
+        {
+            modal.SetActive(false); gameScreen.SetActive(false); map.gameObject.SetActive(false); characters.gameObject.SetActive(false);
+            titleNotice.text = SaveRecovered ? "저장 파일을 읽지 못해 새로 시작해요" : "";
+            titleScreen.SetActive(true);
+            audioService.PlayBgm(audioService.bgmMap);
         }
         private static string SaveDirectory { get { return SaveDirectoryOverride ?? Application.persistentDataPath; } }
         // 저장을 읽어 화면에서 쓰는 값으로 풉니다.
@@ -195,8 +213,8 @@ namespace StardustAtelier.View
         public IList<int> Owned { get { return owned; } }
         public int Gold { get { return save != null ? save.gold : 0; } }
         public CharacterCatalog Catalog { get { Load(); return catalog; } }
-        public bool BgmOn { get { return save == null || save.settings.bgm; } }
-        public bool SfxOn { get { return save == null || save.settings.sfx; } }
+        public int BgmVolume { get { return save == null ? 100 : save.settings.bgmVolume; } }
+        public int SfxVolume { get { return save == null ? 100 : save.settings.sfxVolume; } }
         public SkillData Skill(int id)
         {
             foreach (SkillData skill in catalog.skills) if (skill.id == id) return skill;
@@ -214,8 +232,9 @@ namespace StardustAtelier.View
         public void ShowCharacters()
         {
             modal.SetActive(false); picker.SetActive(false);
-            gameScreen.SetActive(false); map.gameObject.SetActive(false);
+            gameScreen.SetActive(false); map.gameObject.SetActive(false); titleScreen.SetActive(false);
             characters.gameObject.SetActive(true); characters.Open();
+            audioService.PlayBgm(audioService.bgmMap);
         }
         // 설정 팝업: 배경음·효과음 켜기/끄기와 버전 표시.
         public void OpenSettings()
@@ -223,23 +242,20 @@ namespace StardustAtelier.View
             Popup("설정","버전 "+Application.version,"닫기",() => modal.SetActive(false),null,null,null,null);
             popupSoundRow.SetActive(true); RefreshSound(); LayoutPopup();
         }
-        private void ToggleSound(bool bgm)
+        // 슬라이더를 움직이면 소리에 바로 반영하고, 손을 뗀 뒤 한 번 저장합니다(끄는 동안 매 프레임 쓰지 않도록).
+        public void SetVolume(bool bgm, int value)
         {
             if (save == null) return;
-            if (bgm) save.settings.bgm = !save.settings.bgm; else save.settings.sfx = !save.settings.sfx;
-            RefreshSound(); WriteProgress();
+            value = Mathf.Clamp(value,0,100);
+            if (bgm) { save.settings.bgmVolume = value; save.settings.bgm = value > 0; }
+            else { save.settings.sfxVolume = value; save.settings.sfx = value > 0; }
+            ApplyVolume(); RefreshSound(); soundDirty = true;
         }
+        private void ApplyVolume() { audioService.Apply(BgmVolume/100f,SfxVolume/100f); }
         private void RefreshSound()
         {
-            soundBgmText.text = BgmOn ? "배경음 켜짐" : "배경음 꺼짐";
-            soundSfxText.text = SfxOn ? "효과음 켜짐" : "효과음 꺼짐";
-            // 켜진 쪽은 금색, 꺼진 쪽은 어두운 색으로 보여줍니다.
-            PaintSound(soundBgm,soundBgmText,BgmOn); PaintSound(soundSfx,soundSfxText,SfxOn);
-        }
-        private static void PaintSound(UnityEngine.UI.Button button, TMP_Text label, bool on)
-        {
-            button.targetGraphic.color = on ? new Color(1f,0.80f,0.36f) : new Color(0.22f,0.19f,0.34f);
-            label.color = on ? new Color(0.10f,0.06f,0.16f) : new Color(0.70f,0.67f,0.82f);
+            bgmSlider.SetValueWithoutNotify(BgmVolume); sfxSlider.SetValueWithoutNotify(SfxVolume);
+            bgmValue.text = BgmVolume.ToString(); sfxValue.text = SfxVolume.ToString();
         }
         // 방금 끝난 판에서 얻은 골드. 결과 팝업에 보여줍니다.
         public int LastGold { get; private set; }
@@ -265,7 +281,8 @@ namespace StardustAtelier.View
             lastParty = (int[])ids.Clone();
             selection = null; LastEvents = new List<GameEvent>(); PreviewSlot = -1;
             modal.SetActive(false); picker.SetActive(false); clearBanner.SetActive(false);
-            map.gameObject.SetActive(false); characters.gameObject.SetActive(false); gameScreen.SetActive(true);
+            map.gameObject.SetActive(false); characters.gameObject.SetActive(false); titleScreen.SetActive(false); gameScreen.SetActive(true);
+            audioService.PlayBgm(audioService.bgmGame);
             hud.Configure(Session.Level,Config); hud.party.Configure(Session,art); hud.party.Highlight(-1);
             board.Configure(Session.Board,Config.layout.boardAreaPx);
             Busy = true; Intro = true; skipIntro = false; hintTime = 0; hintVisible = false; hud.Busy(true);
@@ -341,6 +358,9 @@ namespace StardustAtelier.View
         }
         private Sprite TutorialPicture(string key)
         {
+            // 설명 그림(600×400). 그림이 없으면 해당 아이템·장애물 그림으로 대신합니다.
+            Sprite picture = art.Tutorial(key);
+            if (picture != null) return picture;
             switch (key)
             {
                 case "tut_ice": return art.ice2;
@@ -388,6 +408,8 @@ namespace StardustAtelier.View
         private void Update()
         {
             if (Config == null) return;
+            // 음량을 바꾼 뒤 손을 떼면 저장합니다.
+            if (soundDirty && (Pointer.current == null || !Pointer.current.press.isPressed)) { soundDirty = false; WriteProgress(); }
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 // 뒤로 가기(13.3): 팝업이 있으면 닫고, 스킬 미리보기면 취소, 인게임 대기·마지막 기회면 일시정지를 엽니다.
@@ -501,6 +523,7 @@ namespace StardustAtelier.View
             CancelSkill();
             LastEvents = Session.EndLastChance();
             hud.endButton.gameObject.SetActive(false); hud.HideTip();
+            audioService.Play(audioService.fail);
             RecordAttempt(false); WriteProgress();
             ShowResult(false);
         }
@@ -517,6 +540,8 @@ namespace StardustAtelier.View
             if (Session.Outcome == SessionOutcome.Clear)
             {
                 clearBanner.SetActive(true);
+                audioService.Play(audioService.clear);
+                vfx.Play(vfx.clear,new Vector2(0,60),Color.white,128);
                 yield return new WaitForSecondsRealtime(Config.timing.clearBannerSec);
                 clearBanner.SetActive(false);
                 bool firstClear = bestStars[current] == 0;
@@ -533,7 +558,7 @@ namespace StardustAtelier.View
                 RecordAttempt(true); WriteProgress();
                 ShowResult(true);
             }
-            else if (Session.Outcome == SessionOutcome.Fail) { RecordAttempt(false); WriteProgress(); ShowResult(false); }
+            else if (Session.Outcome == SessionOutcome.Fail) { audioService.Play(audioService.fail); RecordAttempt(false); WriteProgress(); ShowResult(false); }
             Busy = false; hud.Busy(false); hintTime = 0;
         }
         // ---- 아이템 첫 생성 설명(기획서 13.4) ----
@@ -572,9 +597,9 @@ namespace StardustAtelier.View
             switch (kind)
             {
                 case OccupantKind.Rocket: return art.rocketH;
-                case OccupantKind.Prism: return art.prism;
-                case OccupantKind.Meteor: return art.meteor;
-                default: return art.bomb;
+                case OccupantKind.Prism: return TutorialPicture("tut_prism");
+                case OccupantKind.Meteor: return TutorialPicture("tut_square");
+                default: return TutorialPicture("tut_bomb");
             }
         }
         // 레벨 데이터의 아이템 설명 팝업(레벨 6 폭탄, 15 프리즘)은 첫 생성 설명으로 대신하므로 레벨 시작 때 띄우지 않습니다.
@@ -626,8 +651,9 @@ namespace StardustAtelier.View
         {
             StopAllCoroutines(); Busy = false; Intro = false; PreviewSlot = -1;
             modal.SetActive(false); picker.SetActive(false); introBanner.SetActive(false); clearBanner.SetActive(false);
-            gameScreen.SetActive(false); characters.gameObject.SetActive(false); map.gameObject.SetActive(true);
+            gameScreen.SetActive(false); characters.gameObject.SetActive(false); titleScreen.SetActive(false); map.gameObject.SetActive(true);
             map.Refresh();
+            audioService.PlayBgm(audioService.bgmMap);
         }
         // 레벨 진입 팝업: 레벨 번호, 목표 아이콘·수량, 이동 횟수, 추천 속성, 파티 슬롯, [시작] [닫기].
         public void OpenEntry(int index)
@@ -731,6 +757,9 @@ namespace StardustAtelier.View
         private void ShowPicture(Sprite sprite)
         {
             popupPictureImage.sprite = sprite;
+            // 설명 그림은 가로로 넓고(3:2), 아이템·초상화는 정사각형입니다.
+            bool wide = sprite != null && sprite.rect.width > sprite.rect.height*1.2f;
+            popupPictureImage.rectTransform.sizeDelta = wide ? new Vector2(360,240) : new Vector2(230,230);
             popupPicture.SetActive(true); LayoutPopup();
         }
         // 별은 하나씩 0.3초(starIntervalSec) 간격으로 켭니다.
@@ -741,6 +770,7 @@ namespace StardustAtelier.View
             {
                 yield return new WaitForSecondsRealtime(Config.timing.starIntervalSec);
                 popupStars[i].color = Color.white;
+                vfx.Play(vfx.starPop,Vector2.zero,new Color(1f,0.85f,0.4f),150,0,null,null,0,0,popupStars[i].transform);
                 float elapsed = 0;
                 while (elapsed < 0.15f)
                 {
@@ -786,7 +816,7 @@ namespace StardustAtelier.View
             UnityEngine.UI.Button[] buttons = { primary, secondary, tertiary };
             int count = 0;
             foreach (UnityEngine.UI.Button button in buttons) if (button.gameObject.activeSelf) count++;
-            float height = 120+(row ? 250 : 0)+(body ? 120 : 0)+(party ? 300 : 0)+(goldRow ? 90 : 0)+(sound ? 130 : 0)+20+count*130+50;
+            float height = 120+(row ? 250 : 0)+(body ? 120 : 0)+(party ? 300 : 0)+(goldRow ? 90 : 0)+(sound ? 220 : 0)+20+count*130+50;
             popupCard.sizeDelta = new Vector2(popupCard.sizeDelta.x,height);
             float y = height*0.5f;
             ((RectTransform)popupTitle.transform.parent).anchoredPosition = new Vector2(0,y);
@@ -798,7 +828,7 @@ namespace StardustAtelier.View
                 y -= 250;
             }
             if (body) { ((RectTransform)popupBody.transform).anchoredPosition = new Vector2(0,y-55); y -= 120; }
-            if (sound) { ((RectTransform)popupSoundRow.transform).anchoredPosition = new Vector2(0,y-60); y -= 130; }
+            if (sound) { ((RectTransform)popupSoundRow.transform).anchoredPosition = new Vector2(0,y-105); y -= 220; }
             if (goldRow) { ((RectTransform)popupGoldRow.transform).anchoredPosition = new Vector2(0,y-40); y -= 90; }
             if (party) { ((RectTransform)popupPartyRow.transform).anchoredPosition = new Vector2(0,y-150); y -= 300; }
             y -= 20;

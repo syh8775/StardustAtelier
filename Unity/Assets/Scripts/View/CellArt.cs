@@ -16,6 +16,14 @@ namespace StardustAtelier.View
         // 캐릭터 그림. 순서는 ID 105~109(세이지·루미·피오·솔·모르)입니다.
         public Sprite[] portraits = new Sprite[5];
         public Sprite[] fullBodies = new Sprite[5];
+        // 설명형 튜토리얼 그림. tutorialKeys와 같은 순서입니다.
+        public string[] tutorialKeys = new string[0];
+        public Sprite[] tutorials = new Sprite[0];
+        public Sprite Tutorial(string key)
+        {
+            int index = System.Array.IndexOf(tutorialKeys,key);
+            return index >= 0 && index < tutorials.Length ? tutorials[index] : null;
+        }
         public Sprite Portrait(int id) { int i = id-105; return i >= 0 && i < portraits.Length ? portraits[i] : null; }
         public Sprite FullBody(int id) { int i = id-105; return i >= 0 && i < fullBodies.Length ? fullBodies[i] : null; }
 

@@ -568,7 +568,7 @@ namespace StardustAtelier.View
             }
             Touch();
             // 특수 블록 클릭은 선택 여부와 관계없이 즉시 단독 발동합니다. 조합은 드래그로 교환합니다.
-            // 얼음에 갇힌 특수 블록은 옮길 수 없지만 발동은 되므로, 옮길 수 있는지보다 먼저 확인합니다.
+            // 얼음이나 사슬이 남아 있는 아이템은 발동 판정에서 거절합니다.
             if (MoveFinder.CanActivate(Session.Board,p))
             {
                 selection = null; board.ClearMarks(); BeginTurn();

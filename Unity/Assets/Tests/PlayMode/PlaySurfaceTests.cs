@@ -189,7 +189,7 @@ namespace StardustAtelier.PlayTests
         [UnityTest] public IEnumerator NoMovesFailShowsItsOwnMessage()
         {
             foreach (CellPosition p in app.Session.Board.Positions()) app.Session.Board[p].ice = 2;
-            CellPosition rocket = new CellPosition(0,0); PlaceSpecial(rocket,OccupantKind.Rocket);
+            CellPosition rocket = new CellPosition(0,0); PlaceSpecial(rocket,OccupantKind.Rocket); app.Session.Board[rocket].ice = 0;
             Tap(rocket); yield return Ready();
             float waited = 0;
             while (!app.modal.activeSelf && waited < 5f) { waited += Time.unscaledDeltaTime; yield return null; }

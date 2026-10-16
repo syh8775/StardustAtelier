@@ -177,13 +177,13 @@ namespace StardustAtelier.Tests
             Assert.That(board[1,0].CanSwap,Is.True);
             Assert.That(board[2,0].occupant.color,Is.EqualTo(BlockColor.G));
         }
-        // 얼음에 갇힌 특수 블록은 옮기지 못하지만 눌러서 발동할 수는 있습니다. 유물은 얼지 않습니다.
-        [Test] public void FrozenSpecialStillActivatesAndRelicNeverFreezes()
+        // 얼음 속 아이템은 이동·발동 불가이며, 유물은 기존대로 얼지 않습니다.
+        [Test] public void FrozenSpecialCannotActivateAndRelicNeverFreezes()
         {
             Board board=Make("R","O","-");
             board[0,0].occupant=new Occupant { kind=OccupantKind.Bomb,color=BlockColor.None }; board[0,0].ice=1; board[1,0].ice=2;
             Assert.That(board[0,0].CanSwap,Is.False);
-            Assert.That(MoveFinder.CanActivate(board,new CellPosition(0,0)),Is.True);
+            Assert.That(MoveFinder.CanActivate(board,new CellPosition(0,0)),Is.False);
             Assert.That(board[1,0].CanSwap,Is.True);
             List<GravityEvent> events=new List<GravityEvent>(); Gravity.Collapse(board,events);
             Assert.That(board[2,0].occupant.kind,Is.EqualTo(OccupantKind.Relic));

@@ -97,6 +97,11 @@ namespace StardustAtelier.Core
                 events.Add(new GameEvent(GameEventKind.ChainBroken,p));
                 goals.Record("Chain",BlockColor.None,events);
             }
+            else if (cell.occupant.IsSpecial && cell.ice > 0)
+            {
+                // 얼음 속 아이템은 외부 효과에 맞아도 발동하지 않습니다. 얼음만 한 겹 줄입니다.
+                DamageIce(p,events);
+            }
             else
             {
                 Occupant value = cell.occupant;
@@ -220,6 +225,8 @@ namespace StardustAtelier.Core
 
         public void ResolveCombo(CellPosition a, CellPosition b, List<GameEvent> events)
         {
+            // 직접 호출된 조합도 얼음에 갇힌 아이템을 사용할 수 없습니다.
+            if (!board.Contains(a) || !board.Contains(b) || board[a].Frozen || board[b].Frozen) return;
             Occupant first = board[a].occupant, second = board[b].occupant;
             List<CellPosition> consumed = new List<CellPosition> { a, b };
             bool firstPrism = first.kind == OccupantKind.Prism, secondPrism = second.kind == OccupantKind.Prism;
@@ -243,7 +250,7 @@ namespace StardustAtelier.Core
                 BlockColor color = MostCommonColor();
                 List<CellPosition> converted = new List<CellPosition>();
                 foreach (CellPosition p in board.Positions())
-                    if (board[p].exists && !board[p].chained && board[p].occupant.kind == OccupantKind.ColorBlock && board[p].occupant.color == color)
+                    if (board[p].exists && !board[p].chained && !board[p].Frozen && board[p].occupant.kind == OccupantKind.ColorBlock && board[p].occupant.color == color)
                     {
                         Occupant value = model; value.color = BlockColor.None;
                         if (value.kind == OccupantKind.Rocket) value.orientation = (p.r+p.c)%2 == 0 ? Orientation.H : Orientation.V;

@@ -35,8 +35,8 @@ namespace StardustAtelier.Core
         // 유물도 색 블록처럼 자리를 내줍니다(2026-10-10 변경): 아이템을 유물 칸으로 옮기면 그 칸에서 발동하고 유물은 아이템이 있던 칸으로 갑니다.
         { return special.IsSpecial && special.kind != OccupantKind.Prism && (other.kind == OccupantKind.ColorBlock || other.kind == OccupantKind.Relic); }
         public static bool CanActivate(Board board, CellPosition p)
-        // 얼음에 갇힌 특수 블록도 눌러서 발동할 수는 있습니다(옮기지만 못합니다).
-        { return board.Contains(p) && board[p].exists && !board[p].chained && board[p].occupant.IsSpecial; }
+        // 얼음이 남아 있는 아이템은 단독 발동할 수 없습니다.
+        { return board.Contains(p) && board[p].exists && !board[p].chained && !board[p].Frozen && board[p].occupant.IsSpecial; }
         public static CellPosition? FindActivation(Board board)
         {
             foreach (CellPosition p in board.Positions()) if (CanActivate(board,p)) return p;

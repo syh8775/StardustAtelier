@@ -55,10 +55,11 @@ namespace StardustAtelier.Tests
             foreach (CellPosition p in board.Positions()) board[p].ice = 2;
             board[0,0].occupant = new Occupant { kind=OccupantKind.Prism,color=BlockColor.None };
             board[0,1].occupant = board[0,0].occupant;
+            board[0,0].ice = 0; board[0,1].ice = 0;
             GoalTracker goals = new GoalTracker(new[] { new GoalData { type="Ice",count=9 } });
             List<GameEvent> events = new List<GameEvent>();
             new Resolver(board,goals,1).ResolveCombo(new CellPosition(0,0),new CellPosition(0,1),events);
-            foreach (CellPosition p in board.Positions()) Assert.That(board[p].ice,Is.EqualTo(1),p.ToString());
+            foreach (CellPosition p in board.Positions()) Assert.That(board[p].ice,Is.EqualTo(p.r==0 && p.c<2 ? 0 : 1),p.ToString());
             Assert.That(events.FindAll(e=>e.kind==GameEventKind.CellHit).Count,Is.EqualTo(9));
         }
         // 서로 다른 두 발동(가로 로켓, 세로 로켓)이 같은 2겹 얼음을 각각 한 번씩 타격합니다(E15).
@@ -201,6 +202,7 @@ namespace StardustAtelier.Tests
             foreach (CellPosition p in session.Board.Positions()) session.Board[p].ice = 2;
             CellPosition rocket = new CellPosition(0,0);
             session.Board[rocket].occupant = new Occupant { kind=OccupantKind.Rocket,color=BlockColor.None,orientation=Orientation.H };
+            session.Board[rocket].ice = 0;
             List<GameEvent> events = session.Activate(rocket);
             Assert.That(session.MovesLeft,Is.GreaterThan(0));
             Assert.That(session.Outcome,Is.EqualTo(SessionOutcome.Fail));
@@ -283,18 +285,70 @@ namespace StardustAtelier.Tests
             Assert.That(MatchFinder.Find(session.Board,false),Is.Empty);
             Assert.That(events.FindAll(e=>e.kind==GameEventKind.TurnEnded).Count,Is.EqualTo(1));
         }
-        [Test] public void SingleRocketChainsBombAndHitsItsOwnIceOnce()
+        [Test] public void SingleUnfrozenRocketChainsBomb()
         {
             Board board = Make("RBG","GYB","BGR"); CellPosition p = new CellPosition(1,0);
             board[p].occupant = new Occupant { kind=OccupantKind.Rocket,color=BlockColor.G,orientation=Orientation.H };
-            board[p].ice = 2;
             board[1,2].occupant = new Occupant { kind=OccupantKind.Bomb,color=BlockColor.B };
             List<GameEvent> events = new List<GameEvent>();
             new Resolver(board,new GoalTracker(new[] { new GoalData { type="Collect",color="B",count=3 } }),1).Activate(p,events);
             Assert.That(events.FindAll(e=>e.kind==GameEventKind.SpecialActivated).Count,Is.EqualTo(2));
-            Assert.That(board[p].ice,Is.EqualTo(1));
+            Assert.That(board[p].ice,Is.Zero);
             Assert.That(board[0,2].occupant.kind,Is.EqualTo(OccupantKind.Empty));
         }
+
+        // 사용자 확정: 얼음 속 네 아이템은 탭·교환으로 사용할 수 없고 이동도 소비하지 않습니다.
+        [TestCase(OccupantKind.Rocket,1)] [TestCase(OccupantKind.Rocket,2)]
+        [TestCase(OccupantKind.Bomb,1)] [TestCase(OccupantKind.Bomb,2)]
+        [TestCase(OccupantKind.Meteor,1)] [TestCase(OccupantKind.Meteor,2)]
+        [TestCase(OccupantKind.Prism,1)] [TestCase(OccupantKind.Prism,2)]
+        public void FrozenItemCannotBeUsedOrSpendAMove(OccupantKind kind,int layers)
+        {
+            GameSession session = new GameSession(FirstLevel(),Config(),63);
+            CellPosition at = new CellPosition(0,0);
+            session.Board[at].occupant = new Occupant { kind=kind,color=BlockColor.None };
+            session.Board[at].ice = layers;
+            string before = Fingerprint(session.Board); int moves=session.MovesLeft;
+            Assert.That(session.Activate(at),Is.Empty);
+            Assert.That(session.Swap(at,new CellPosition(0,1)),Is.Empty);
+            Assert.That(session.MovesLeft,Is.EqualTo(moves)); Assert.That(session.Turns,Is.Zero);
+            Assert.That(Fingerprint(session.Board),Is.EqualTo(before));
+            Assert.That(MoveFinder.CanActivate(session.Board,at),Is.False);
+        }
+        // 외부 아이템 효과에 맞을 때도 얼음만 깨지고, 갇혀 있던 아이템은 그 타격으로 발동하지 않습니다.
+        [TestCase(OccupantKind.Rocket,1)] [TestCase(OccupantKind.Rocket,2)]
+        [TestCase(OccupantKind.Bomb,1)] [TestCase(OccupantKind.Bomb,2)]
+        [TestCase(OccupantKind.Meteor,1)] [TestCase(OccupantKind.Meteor,2)]
+        [TestCase(OccupantKind.Prism,1)] [TestCase(OccupantKind.Prism,2)]
+        public void ExternalEffectOnlyDamagesIceOnFrozenItem(OccupantKind kind,int layers)
+        {
+            Board board=Make("RBG","GYB","BGR"); CellPosition source=new CellPosition(1,0),at=new CellPosition(1,1);
+            board[source].occupant=new Occupant {kind=OccupantKind.Rocket,color=BlockColor.None,orientation=Orientation.H};
+            board[at].occupant=new Occupant {kind=kind,color=BlockColor.None}; board[at].ice=layers;
+            List<GameEvent> events=new List<GameEvent>();
+            new Resolver(board,new GoalTracker(new GoalData[0]),1).Activate(source,events);
+            Assert.That(board[at].ice,Is.EqualTo(layers-1)); Assert.That(board[at].occupant.kind,Is.EqualTo(kind));
+            Assert.That(events.Exists(e=>e.kind==GameEventKind.SpecialActivated && e.position.Equals(at)),Is.False);
+            Assert.That(events.Exists(e=>e.kind==GameEventKind.BlockCleared && e.position.Equals(at)),Is.False);
+            Assert.That(MoveFinder.CanActivate(board,at),Is.EqualTo(layers==1));
+        }
+        [Test] public void FrozenItemCannotBypassRestrictionThroughComboResolver()
+        {
+            Board board=Make("RBG"); board[0,0].occupant=new Occupant {kind=OccupantKind.Prism,color=BlockColor.None};
+            board[0,1].occupant=new Occupant {kind=OccupantKind.Bomb,color=BlockColor.None}; board[0,0].ice=1;
+            string before=Fingerprint(board); List<GameEvent> events=new List<GameEvent>();
+            new Resolver(board,new GoalTracker(new GoalData[0]),1).ResolveCombo(new CellPosition(0,0),new CellPosition(0,1),events);
+            Assert.That(events,Is.Empty); Assert.That(Fingerprint(board),Is.EqualTo(before));
+        }
+        [Test] public void OriginalOneHitBoxIsDestroyedByBomb()
+        {
+            Board board=Make("RBG","GXG","BGR"); CellPosition source=new CellPosition(1,0);
+            board[source].occupant=new Occupant {kind=OccupantKind.Bomb,color=BlockColor.None};
+            GoalTracker goals=new GoalTracker(new[] {new GoalData {type="Box",count=1}}); List<GameEvent> events=new List<GameEvent>();
+            new Resolver(board,goals,1).Activate(source,events);
+            Assert.That(board[1,1].occupant.kind,Is.EqualTo(OccupantKind.Empty)); Assert.That(goals.Complete,Is.True);
+        }
+
         [Test] public void SinglePrismClearsMostCommonColor()
         {
             Board board = Make("RBR","GBR","YPR"); CellPosition p = new CellPosition(1,0);
